@@ -572,32 +572,44 @@ class HomeView extends GetView<HomeController> {
         children: [
           _buildNavItem(Icons.home, 'Home', isActive: true),
           _buildNavItem(Icons.play_circle_fill, 'Media'),
-          _buildNavItem(Icons.calendar_today, 'Events'),
+          _buildNavItem(
+            Icons.calendar_today,
+            'Events',
+            onTap: () => Get.toNamed(Routes.events),
+          ),
           _buildNavItem(Icons.menu, 'More'),
         ],
       ),
     );
   }
 
-  Widget _buildNavItem(IconData icon, String label, {bool isActive = false}) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(
-          icon,
-          color: isActive ? AppTheme.primary : AppTheme.textSecondary,
-          size: 24.sp,
-        ),
-        SizedBox(height: 4.h),
-        Text(
-          label,
-          style: TextStyle(
+  Widget _buildNavItem(
+    IconData icon,
+    String label, {
+    bool isActive = false,
+    VoidCallback? onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            icon,
             color: isActive ? AppTheme.primary : AppTheme.textSecondary,
-            fontSize: 10.sp,
-            fontWeight: isActive ? FontWeight.w600 : FontWeight.normal,
+            size: 24.sp,
           ),
-        ),
-      ],
+          SizedBox(height: 4.h),
+          Text(
+            label,
+            style: TextStyle(
+              color: isActive ? AppTheme.primary : AppTheme.textSecondary,
+              fontSize: 10.sp,
+              fontWeight: isActive ? FontWeight.w600 : FontWeight.normal,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

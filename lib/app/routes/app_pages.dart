@@ -10,6 +10,8 @@ import '../modules/welcome/bindings/welcome_binding.dart';
 import '../modules/welcome/views/welcome_view.dart';
 import '../modules/profile/bindings/profile_binding.dart';
 import '../modules/profile/views/profile_view.dart';
+import '../modules/events/bindings/events_binding.dart';
+import '../modules/events/views/events_view.dart';
 
 part 'app_routes.dart';
 
@@ -43,6 +45,11 @@ class AppPages {
       name: _Paths.profile,
       page: () => const ProfileView(),
       binding: ProfileBinding(),
+    ),
+    GetPage(
+      name: _Paths.events,
+      page: () => const EventsView(),
+      binding: EventsBinding(),
     ),
   ];
 }
