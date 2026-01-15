@@ -2,6 +2,7 @@ import 'package:church_app/app/core/theme/app_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:church_app/app/routes/app_pages.dart';
 import '../controllers/home_controller.dart';
 
 class HomeView extends GetView<HomeController> {
@@ -52,9 +53,12 @@ class HomeView extends GetView<HomeController> {
       children: [
         Row(
           children: [
-            CircleAvatar(
-              radius: 20.r,
-              backgroundImage: const AssetImage('assets/images/avatar.png'),
+            GestureDetector(
+              onTap: () => Get.toNamed(Routes.profile),
+              child: CircleAvatar(
+                radius: 20.r,
+                backgroundImage: const AssetImage('assets/images/avatar.png'),
+              ),
             ),
             SizedBox(width: 12.w),
             Column(
