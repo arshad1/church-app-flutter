@@ -11,6 +11,28 @@ class AuthService extends GetxService {
   String? get token => _storage.read('token');
   dynamic get user => _storage.read('user');
 
+  String get userName {
+    final u = user;
+    if (u == null) return "User";
+
+    // Try different common name fields
+    if (u['firstName'] != null) {
+      if (u['lastName'] != null) {
+        return "${u['firstName']} ${u['lastName']}";
+      }
+      return u['firstName'];
+    }
+
+    if (u['name'] != null) return u['name'];
+
+    // Fallback to email username if nothing else
+    if (u['email'] != null) {
+      return u['email'].split('@')[0];
+    }
+
+    return "Member";
+  }
+
   Future<dynamic> login(String email, String password) async {
     try {
       final response = await _client.post(

@@ -64,11 +64,20 @@ class LoginController extends GetxController {
       await _storage.write('user', user);
 
       // Register Token (Fire & Forget)
-      // TODO: Replace with real FCM token when firebase_messaging is added
-      _authService.registerToken(
-        "dummy_fcm_token_${DateTime.now().millisecondsSinceEpoch}",
-        GetPlatform.isAndroid ? "android" : "ios",
-      );
+      // Register Token (Fire & Forget)
+      // try {
+      //   final notificationService = Get.find<NotificationService>();
+      //   final fcmToken = await notificationService.getFcmToken();
+      //
+      //   if (fcmToken != null) {
+      //     _authService.registerToken(
+      //       fcmToken,
+      //       GetPlatform.isAndroid ? "android" : "ios",
+      //     );
+      //   }
+      // } catch (e) {
+      //   debugPrint("Failed to register FCM token: \$e");
+      // }
 
       // Navigate to Landing Page instead of Home
       Get.offAllNamed(Routes.landing);

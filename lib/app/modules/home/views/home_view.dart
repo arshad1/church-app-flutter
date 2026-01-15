@@ -65,7 +65,7 @@ class HomeView extends GetView<HomeController> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Good Morning, Sarah',
+                  'Good Morning, ${controller.userName}',
                   style: TextStyle(
                     color: Colors.white,
                     fontSize: 16.sp,
@@ -396,168 +396,202 @@ class HomeView extends GetView<HomeController> {
   }
 
   Widget _buildNoticeBanner() {
-    return Container(
-      width: double.infinity,
-      padding: EdgeInsets.all(16.w),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFFF97316), Color(0xFFEF4444)], // Orange to Red
+    return Obx(() {
+      if (controller.announcements.isEmpty) {
+        return const SizedBox.shrink(); // Hide if no announcements
+      }
+
+      // Show the latest announcement
+      final announcement = controller.announcements.first;
+
+      return Container(
+        width: double.infinity,
+        padding: EdgeInsets.all(16.w),
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [Color(0xFFF97316), Color(0xFFEF4444)], // Orange to Red
+          ),
+          borderRadius: BorderRadius.circular(16.r),
         ),
-        borderRadius: BorderRadius.circular(16.r),
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: EdgeInsets.all(10.w),
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.2),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(Icons.campaign, color: Colors.white, size: 24.sp),
-          ),
-          SizedBox(width: 16.w),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Annual Picnic Notice',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 14.sp,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                SizedBox(height: 4.h),
-                Text(
-                  'Sign up by this Friday to secure your spot! Food and games for all ages.',
-                  style: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.9),
-                    fontSize: 12.sp,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          SizedBox(width: 12.w),
-          ElevatedButton(
-            onPressed: () {},
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.white,
-              foregroundColor: const Color(0xFFEF4444),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8.r),
+        child: Row(
+          children: [
+            Container(
+              padding: EdgeInsets.all(10.w),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.2),
+                shape: BoxShape.circle,
               ),
-              padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
-              minimumSize: Size.zero,
+              child: Icon(Icons.campaign, color: Colors.white, size: 24.sp),
             ),
-            child: Text(
-              'View',
-              style: TextStyle(fontSize: 12.sp, fontWeight: FontWeight.bold),
+            SizedBox(width: 16.w),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    announcement.title,
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 14.sp,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  SizedBox(height: 4.h),
+                  Text(
+                    announcement.content,
+                    style: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.9),
+                      fontSize: 12.sp,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
             ),
-          ),
-        ],
-      ),
-    );
+            SizedBox(width: 12.w),
+            ElevatedButton(
+              onPressed: () {
+                // TODO: Show full announcement details
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.white,
+                foregroundColor: const Color(0xFFEF4444),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8.r),
+                ),
+                padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+                minimumSize: Size.zero,
+              ),
+              child: Text(
+                'View',
+                style: TextStyle(fontSize: 12.sp, fontWeight: FontWeight.bold),
+              ),
+            ),
+          ],
+        ),
+      );
+    });
   }
 
   Widget _buildEventsList() {
-    final events = [
-      {
-        'date': '27',
-        'month': 'OCT',
-        'title': 'Sunday Service',
-        'time': '10:00 AM',
-        'location': 'Main Sanctuary',
-      },
-      {
-        'date': '30',
-        'month': 'OCT',
-        'title': 'Youth Group Meeting',
-        'time': '7:00 PM',
-        'location': 'Youth Hall',
-      },
-      {
-        'date': '02',
-        'month': 'NOV',
-        'title': 'Community Outreach',
-        'time': '9:00 AM',
-        'location': 'City Park',
-      },
-    ];
+    return Obx(() {
+      if (controller.isLoading.value) {
+        return const Center(child: CircularProgressIndicator());
+      }
 
-    return Column(
-      children: events.map((event) {
-        return Container(
-          margin: EdgeInsets.only(bottom: 16.h),
-          padding: EdgeInsets.all(16.w),
-          decoration: BoxDecoration(
-            color: AppTheme.surface,
-            borderRadius: BorderRadius.circular(16.r),
-          ),
-          child: Row(
-            children: [
-              Container(
-                padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
-                decoration: BoxDecoration(
-                  color: AppTheme.background,
-                  borderRadius: BorderRadius.circular(12.r),
-                ),
-                child: Column(
-                  children: [
-                    Text(
-                      event['month']!,
-                      style: TextStyle(
-                        color: AppTheme.textSecondary,
-                        fontSize: 10.sp,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    Text(
-                      event['date']!,
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 18.sp,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              SizedBox(width: 16.w),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      event['title']!,
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 16.sp,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    SizedBox(height: 4.h),
-                    Text(
-                      '${event['time']} • ${event['location']}',
-                      style: TextStyle(
-                        color: AppTheme.textSecondary,
-                        fontSize: 12.sp,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Icon(
-                Icons.chevron_right,
-                color: AppTheme.textSecondary,
-                size: 20.sp,
-              ),
-            ],
+      if (controller.upcomingEvents.isEmpty) {
+        return Center(
+          child: Text(
+            "No upcoming events",
+            style: TextStyle(color: AppTheme.textSecondary),
           ),
         );
-      }).toList(),
-    );
+      }
+
+      return Column(
+        children: controller.upcomingEvents.map((event) {
+          // Parse date
+          DateTime? date;
+          try {
+            date = DateTime.parse(event.startDate);
+          } catch (_) {}
+
+          final month = date != null
+              ? [
+                  "JAN",
+                  "FEB",
+                  "MAR",
+                  "APR",
+                  "MAY",
+                  "JUN",
+                  "JUL",
+                  "AUG",
+                  "SEP",
+                  "OCT",
+                  "NOV",
+                  "DEC",
+                ][date.month - 1]
+              : "";
+          final day = date != null ? date.day.toString() : "";
+          final time = date != null
+              ? "${date.hour}:${date.minute.toString().padLeft(2, '0')}"
+              : ""; // Simple formatting
+
+          return Container(
+            margin: EdgeInsets.only(bottom: 16.h),
+            padding: EdgeInsets.all(16.w),
+            decoration: BoxDecoration(
+              color: AppTheme.surface,
+              borderRadius: BorderRadius.circular(16.r),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 12.w,
+                    vertical: 8.h,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppTheme.background,
+                    borderRadius: BorderRadius.circular(12.r),
+                  ),
+                  child: Column(
+                    children: [
+                      Text(
+                        month,
+                        style: TextStyle(
+                          color: AppTheme.textSecondary,
+                          fontSize: 10.sp,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      Text(
+                        day,
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 18.sp,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                SizedBox(width: 16.w),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        event.title,
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 16.sp,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      SizedBox(height: 4.h),
+                      Text(
+                        '$time • ${event.location ?? "TBA"}',
+                        style: TextStyle(
+                          color: AppTheme.textSecondary,
+                          fontSize: 12.sp,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Icon(
+                  Icons.chevron_right,
+                  color: AppTheme.textSecondary,
+                  size: 20.sp,
+                ),
+              ],
+            ),
+          );
+        }).toList(),
+      );
+    });
   }
 
   Widget _buildBottomNavBar() {
