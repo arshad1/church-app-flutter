@@ -1,0 +1,5 @@
+import 'package:get/get.dart';
+
+class MediaController extends GetxController {
+  final selectedFilter = 'All'.obs;
+}

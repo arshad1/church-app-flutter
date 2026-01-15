@@ -571,7 +571,11 @@ class HomeView extends GetView<HomeController> {
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
           _buildNavItem(Icons.home, 'Home', isActive: true),
-          _buildNavItem(Icons.play_circle_fill, 'Media'),
+          _buildNavItem(
+            Icons.play_circle_fill,
+            'Media',
+            onTap: () => Get.toNamed(Routes.media),
+          ),
           _buildNavItem(
             Icons.calendar_today,
             'Events',

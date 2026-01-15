@@ -9,6 +9,7 @@ abstract class Routes {
   static const landing = _Paths.landing;
   static const profile = _Paths.profile;
   static const events = _Paths.events;
+  static const media = _Paths.media;
 }
 
 abstract class _Paths {
@@ -19,4 +20,5 @@ abstract class _Paths {
   static const landing = '/landing';
   static const profile = '/profile';
   static const events = '/events';
+  static const media = '/media';
 }

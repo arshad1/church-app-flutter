@@ -360,7 +360,11 @@ class EventsView extends GetView<EventsController> {
             'Home',
             onTap: () => Get.offNamed(Routes.home),
           ),
-          _buildNavItem(Icons.play_circle_fill, 'Media'),
+          _buildNavItem(
+            Icons.play_circle_fill,
+            'Media',
+            onTap: () => Get.offNamed(Routes.media),
+          ),
           _buildNavItem(Icons.calendar_today, 'Events', isActive: true),
           _buildNavItem(Icons.menu, 'More'),
         ],
