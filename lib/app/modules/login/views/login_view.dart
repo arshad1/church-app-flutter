@@ -58,8 +58,8 @@ class LoginView extends GetView<LoginController> {
                       begin: Alignment.topCenter,
                       end: Alignment.bottomCenter,
                       colors: [
-                        Colors.black.withOpacity(0.0),
-                        Colors.black.withOpacity(0.6),
+                        Colors.black.withValues(alpha: 0.0),
+                        Colors.black.withValues(alpha: 0.6),
                       ],
                     ),
                   ),
@@ -68,7 +68,7 @@ class LoginView extends GetView<LoginController> {
                       width: 64,
                       height: 64,
                       decoration: BoxDecoration(
-                        color: primaryColor.withOpacity(0.9),
+                        color: primaryColor.withValues(alpha: 0.9),
                         shape: BoxShape.circle,
                       ),
                       child: const Icon(
@@ -216,30 +216,37 @@ class LoginView extends GetView<LoginController> {
               SizedBox(
                 width: double.infinity,
                 height: 56,
-                child: Obx(() => ElevatedButton(
-                  onPressed: controller.isLoading.value ? null : controller.login,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: primaryColor,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+                child: Obx(
+                  () => ElevatedButton(
+                    onPressed: controller.isLoading.value
+                        ? null
+                        : controller.login,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: primaryColor,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      elevation: 4,
                     ),
-                    elevation: 4,
+                    child: controller.isLoading.value
+                        ? const SizedBox(
+                            height: 24,
+                            width: 24,
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                              strokeWidth: 2,
+                            ),
+                          )
+                        : const Text(
+                            'Sign In',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                   ),
-                  child: controller.isLoading.value 
-                    ? const SizedBox(
-                        height: 24, 
-                        width: 24, 
-                        child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)
-                      ) 
-                    : const Text(
-                    'Sign In',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                )),
+                ),
               ),
 
               const SizedBox(height: 32),

@@ -35,7 +35,7 @@ class LoginController extends GetxController {
         "Required",
         "Please enter both email and password",
         snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.orange.withOpacity(0.8),
+        backgroundColor: Colors.orange.withValues(alpha: 0.8),
         colorText: Colors.white,
       );
       return;
@@ -46,7 +46,7 @@ class LoginController extends GetxController {
         "Invalid Email",
         "Please enter a valid email address",
         snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.orange.withOpacity(0.8),
+        backgroundColor: Colors.orange.withValues(alpha: 0.8),
         colorText: Colors.white,
       );
       return;
@@ -59,34 +59,34 @@ class LoginController extends GetxController {
       // Save session
       final token = response['token'];
       final user = response['user'];
-      
+
       await _storage.write('token', token);
       await _storage.write('user', user);
 
       // Register Token (Fire & Forget)
       // TODO: Replace with real FCM token when firebase_messaging is added
       _authService.registerToken(
-        "dummy_fcm_token_${DateTime.now().millisecondsSinceEpoch}", 
-        GetPlatform.isAndroid ? "android" : "ios"
+        "dummy_fcm_token_${DateTime.now().millisecondsSinceEpoch}",
+        GetPlatform.isAndroid ? "android" : "ios",
       );
 
       // Navigate to Landing Page instead of Home
       Get.offAllNamed(Routes.landing);
-      
     } catch (e) {
       String message = "Login failed";
       if (e is DioException) {
-        message = e.response?.data['message'] ?? e.message ?? "Connection error";
+        message =
+            e.response?.data['message'] ?? e.message ?? "Connection error";
       } else {
         message = e.toString();
       }
-      
+
       Get.snackbar(
-        "Error", 
-        message, 
-        backgroundColor: Colors.red.withOpacity(0.8),
+        "Error",
+        message,
+        backgroundColor: Colors.red.withValues(alpha: 0.8),
         colorText: Colors.white,
-        snackPosition: SnackPosition.BOTTOM
+        snackPosition: SnackPosition.BOTTOM,
       );
     } finally {
       isLoading.value = false;

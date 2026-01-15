@@ -27,7 +27,7 @@ class LandingView extends GetView<LandingController> {
                   width: 120,
                   height: 120,
                   decoration: BoxDecoration(
-                    color: Colors.blue.withOpacity(0.1),
+                    color: Colors.blue.withValues(alpha: 0.1),
                     shape: BoxShape.circle,
                   ),
                   child: const Icon(
@@ -49,10 +49,7 @@ class LandingView extends GetView<LandingController> {
                 const Text(
                   'Welcome back to GraceCommunity. We are glad to have you here.',
                   textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: Colors.white70,
-                    fontSize: 16,
-                  ),
+                  style: TextStyle(color: Colors.white70, fontSize: 16),
                 ),
                 const Spacer(),
                 SizedBox(

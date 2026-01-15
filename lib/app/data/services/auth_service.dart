@@ -13,10 +13,10 @@ class AuthService extends GetxService {
 
   Future<dynamic> login(String email, String password) async {
     try {
-      final response = await _client.post('/auth/login', data: {
-        'email': email,
-        'password': password,
-      });
+      final response = await _client.post(
+        '/auth/login',
+        data: {'email': email, 'password': password},
+      );
       return response.data;
     } catch (e) {
       rethrow;
@@ -31,12 +31,12 @@ class AuthService extends GetxService {
 
   Future<void> registerToken(String token, String platform) async {
     try {
-      await _client.post('/notifications/register-token', data: {
-        'token': token,
-        'platform': platform,
-      });
+      await _client.post(
+        '/notifications/register-token',
+        data: {'token': token, 'platform': platform},
+      );
     } catch (e) {
-      print("Token registration failed: $e");
+      // print("Token registration failed: $e");
     }
   }
 }

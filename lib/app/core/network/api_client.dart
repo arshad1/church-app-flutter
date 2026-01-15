@@ -11,7 +11,7 @@ class ApiClient {
     // Use 10.0.2.2 for Android Emulator, localhost for iOS Simulator or Web
     // Updated to localhost as requested, but keeping 10.0.2.2 logic for Android stability
     String baseUrl = 'http://localhost:3000/api';
-    
+
     if (GetPlatform.isAndroid) {
       baseUrl = 'http://10.0.2.2:3000/api';
     }
@@ -24,23 +24,28 @@ class ApiClient {
       'Accept': 'application/json',
     };
 
-    _dio.interceptors.add(InterceptorsWrapper(
-      onRequest: (options, handler) {
-        final token = _storage.read('token');
-        if (token != null) {
-          options.headers['Authorization'] = 'Bearer $token';
-        }
-        return handler.next(options);
-      },
-      onError: (DioException e, handler) {
-        // Handle common errors here (e.g., logging, global snackbar)
-        print("API Error: ${e.response?.statusCode} - ${e.message}");
-        return handler.next(e);
-      },
-    ));
+    _dio.interceptors.add(
+      InterceptorsWrapper(
+        onRequest: (options, handler) {
+          final token = _storage.read('token');
+          if (token != null) {
+            options.headers['Authorization'] = 'Bearer $token';
+          }
+          return handler.next(options);
+        },
+        onError: (DioException e, handler) {
+          // Handle common errors here (e.g., logging, global snackbar)
+          // print("API Error: ${e.response?.statusCode} - ${e.message}");
+          return handler.next(e);
+        },
+      ),
+    );
   }
 
-  Future<Response> get(String path, {Map<String, dynamic>? queryParameters}) async {
+  Future<Response> get(
+    String path, {
+    Map<String, dynamic>? queryParameters,
+  }) async {
     return _dio.get(path, queryParameters: queryParameters);
   }
 

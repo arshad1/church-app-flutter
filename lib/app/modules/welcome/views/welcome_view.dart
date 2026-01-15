@@ -26,8 +26,8 @@ class WelcomeView extends GetView<WelcomeController> {
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
                 colors: [
-                  Colors.black.withOpacity(0.3),
-                  Colors.black.withOpacity(0.7),
+                  Colors.black.withValues(alpha: 0.3),
+                  Colors.black.withValues(alpha: 0.7),
                 ],
               ),
             ),
@@ -47,7 +47,7 @@ class WelcomeView extends GetView<WelcomeController> {
                       Container(
                         padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.2),
+                          color: Colors.white.withValues(alpha: 0.2),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: const Icon(
@@ -75,7 +75,7 @@ class WelcomeView extends GetView<WelcomeController> {
                       vertical: 8,
                     ),
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.1),
+                      color: Colors.white.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: const Text(
@@ -179,7 +179,7 @@ class WelcomeView extends GetView<WelcomeController> {
                     height: 56,
                     child: OutlinedButton(
                       onPressed: () {
-                        print("Navigating to Login (Named)...");
+                        // print("Navigating to Login (Named)...");
                         Get.toNamed(Routes.login);
                       },
                       style: OutlinedButton.styleFrom(
@@ -187,7 +187,7 @@ class WelcomeView extends GetView<WelcomeController> {
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
-                        backgroundColor: Colors.white.withOpacity(0.05),
+                        backgroundColor: Colors.white.withValues(alpha: 0.05),
                       ),
                       child: const Text(
                         'Log In',
