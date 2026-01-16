@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../routes/app_pages.dart';
 import '../controllers/events_controller.dart';
@@ -95,7 +96,7 @@ class EventsView extends GetView<EventsController> {
   }
 
   Widget _buildFilterChips() {
-    final filters = ['All', 'Worship', 'Youth', 'Outreach'];
+    final filters = ['All Events', 'Live & Streamed', 'Featured'];
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       child: Row(
@@ -141,208 +142,357 @@ class EventsView extends GetView<EventsController> {
   }
 
   Widget _buildFeaturedCard() {
-    return Container(
-      width: double.infinity,
-      height: 200.h,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(24.r),
-        image: const DecorationImage(
-          image: AssetImage('assets/images/event_easter.png'),
-          fit: BoxFit.cover,
-        ),
-      ),
-      child: Container(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(24.r),
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              Colors.black.withValues(alpha: 0.1),
-              Colors.black.withValues(alpha: 0.7),
-            ],
+    return Obx(() {
+      final featuredEvent = controller.featuredEvent;
+
+      if (featuredEvent == null) {
+        return SizedBox.shrink();
+      }
+
+      final canLaunchStream = featuredEvent.isLive &&
+                              featuredEvent.liveUrl != null &&
+                              featuredEvent.liveUrl!.isNotEmpty;
+
+      return GestureDetector(
+        onTap: canLaunchStream ? () => _launchStream(featuredEvent.liveUrl!) : null,
+        child: Container(
+          width: double.infinity,
+          height: 200.h,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(24.r),
+            color: AppTheme.surface,
+          ),
+          child: Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(24.r),
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  Colors.black.withValues(alpha: 0.1),
+                  Colors.black.withValues(alpha: 0.7),
+                ],
+              ),
+            ),
+            padding: EdgeInsets.all(20.w),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
+                      decoration: BoxDecoration(
+                        color: featuredEvent.isLive
+                            ? Colors.red
+                            : AppTheme.primary,
+                        borderRadius: BorderRadius.circular(8.r),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          if (featuredEvent.isLive) ...[
+                            Icon(
+                              Icons.circle,
+                              color: Colors.white,
+                              size: 8.sp,
+                            ),
+                            SizedBox(width: 4.w),
+                          ],
+                          Text(
+                            featuredEvent.isLive ? 'LIVE NOW' : 'UPCOMING',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 10.sp,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    if (canLaunchStream) ...[
+                      SizedBox(width: 8.w),
+                      Container(
+                        padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.2),
+                          borderRadius: BorderRadius.circular(6.r),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.play_circle_outline,
+                              color: Colors.white,
+                              size: 12.sp,
+                            ),
+                            SizedBox(width: 4.w),
+                            Text(
+                              'Watch',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 10.sp,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+                const Spacer(),
+                Text(
+                  featuredEvent.title,
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 20.sp,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                SizedBox(height: 8.h),
+                if (featuredEvent.description != null && featuredEvent.description!.isNotEmpty)
+                  Text(
+                    featuredEvent.description!,
+                    style: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.9),
+                      fontSize: 12.sp,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+              ],
+            ),
           ),
         ),
-        padding: EdgeInsets.all(20.w),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
-              decoration: BoxDecoration(
-                color: AppTheme.primary,
-                borderRadius: BorderRadius.circular(8.r),
-              ),
-              child: Text(
-                'THIS SUNDAY',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 10.sp,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-            const Spacer(),
-            Text(
-              'Easter Sunday Service',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 20.sp,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            SizedBox(height: 8.h),
-            Text(
-              'Join us for a celebration of life and...',
-              style: TextStyle(
-                color: Colors.white.withValues(alpha: 0.9),
-                fontSize: 12.sp,
-              ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ],
-        ),
-      ),
-    );
+      );
+    });
   }
 
   Widget _buildUpcomingEventsList() {
-    final events = [
-      {
-        'date': '12',
-        'month': 'OCT',
-        'title': 'Wednesday Bible Study',
-        'time': '7:00 PM',
-        'location': 'Main Hall',
-      },
-      {
-        'date': '15',
-        'month': 'JUL',
-        'title': 'Youth Summer Camp',
-        'time': '5 Days',
-        'location': 'Camp Horizon',
-        'icon': Icons.calendar_today, // Custom icon/logic maybe
-      },
-      {
-        'date': '20',
-        'month': 'OCT',
-        'title': 'Community Food Drive',
-        'time': '10:00 AM',
-        'location': 'Parking Lot B',
-      },
-      {
-        'date': '25',
-        'month': 'NOV',
-        'title': 'Online Worship Night',
-        'time': '8:00 PM',
-        'location': 'Live Stream',
-      },
-    ];
+    return Obx(() {
+      if (controller.isLoading.value) {
+        return Center(
+          child: CircularProgressIndicator(),
+        );
+      }
 
-    return Column(
-      children: events.map((event) {
-        return Container(
-          margin: EdgeInsets.only(bottom: 16.h),
-          padding: EdgeInsets.all(16.w),
-          decoration: BoxDecoration(
-            color: AppTheme.surface,
-            borderRadius: BorderRadius.circular(16.r),
+      final events = controller.upcomingEvents;
+
+      if (events.isEmpty) {
+        return Center(
+          child: Text(
+            'No upcoming events',
+            style: TextStyle(
+              color: AppTheme.textSecondary,
+              fontSize: 14.sp,
+            ),
           ),
-          child: Row(
-            children: [
-              Container(
-                width: 50.w,
-                padding: EdgeInsets.symmetric(vertical: 8.h),
-                decoration: BoxDecoration(
-                  color: AppTheme.background,
-                  borderRadius: BorderRadius.circular(12.r),
-                ),
-                child: Column(
-                  children: [
-                    Text(
-                      event['month'] as String,
-                      style: TextStyle(
-                        color: AppTheme
-                            .primary, // Blue text for month in this design
-                        fontSize: 10.sp,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    SizedBox(height: 2.h),
-                    Text(
-                      event['date'] as String,
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 18.sp,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
-                ),
+        );
+      }
+
+      return Column(
+        children: events.map((event) {
+          final dateTime = DateTime.parse(event.startDate);
+          final month = _getMonthAbbreviation(dateTime.month);
+          final day = dateTime.day.toString();
+          final canLaunchStream = event.isLive &&
+                                  event.liveUrl != null &&
+                                  event.liveUrl!.isNotEmpty;
+
+          return GestureDetector(
+            onTap: canLaunchStream ? () => _launchStream(event.liveUrl!) : null,
+            child: Container(
+              margin: EdgeInsets.only(bottom: 16.h),
+              padding: EdgeInsets.all(16.w),
+              decoration: BoxDecoration(
+                color: AppTheme.surface,
+                borderRadius: BorderRadius.circular(16.r),
+                border: event.isLive
+                    ? Border.all(color: Colors.red.withValues(alpha: 0.5), width: 2)
+                    : null,
               ),
-              SizedBox(width: 16.w),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      event['title'] as String,
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 16.sp,
-                        fontWeight: FontWeight.bold,
-                      ),
+              child: Row(
+                children: [
+                  Container(
+                    width: 50.w,
+                    padding: EdgeInsets.symmetric(vertical: 8.h),
+                    decoration: BoxDecoration(
+                      color: event.isLive
+                          ? Colors.red.withValues(alpha: 0.2)
+                          : AppTheme.background,
+                      borderRadius: BorderRadius.circular(12.r),
                     ),
-                    SizedBox(height: 4.h),
-                    Row(
+                    child: Column(
                       children: [
-                        Icon(
-                          Icons.access_time,
-                          color: AppTheme.textSecondary,
-                          size: 14.sp,
-                        ),
-                        SizedBox(width: 4.w),
                         Text(
-                          event['time'] as String,
+                          month,
                           style: TextStyle(
-                            color: AppTheme.textSecondary,
-                            fontSize: 12.sp,
+                            color: event.isLive ? Colors.red : AppTheme.primary,
+                            fontSize: 10.sp,
+                            fontWeight: FontWeight.bold,
                           ),
                         ),
-                        SizedBox(width: 12.w),
-                        Icon(
-                          Icons.place,
-                          color: AppTheme.textSecondary,
-                          size: 14.sp,
-                        ),
-                        SizedBox(width: 4.w),
-                        Expanded(
-                          // Wrap location text
-                          child: Text(
-                            event['location'] as String,
-                            style: TextStyle(
-                              color: AppTheme.textSecondary,
-                              fontSize: 12.sp,
-                            ),
-                            overflow: TextOverflow.ellipsis,
+                        SizedBox(height: 2.h),
+                        Text(
+                          day,
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 18.sp,
+                            fontWeight: FontWeight.bold,
                           ),
                         ),
                       ],
                     ),
-                  ],
-                ),
+                  ),
+                  SizedBox(width: 16.w),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                event.title,
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 16.sp,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            if (event.isLive) ...[
+                              SizedBox(width: 8.w),
+                              Container(
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: 6.w,
+                                  vertical: 2.h,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: Colors.red,
+                                  borderRadius: BorderRadius.circular(4.r),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      Icons.circle,
+                                      color: Colors.white,
+                                      size: 6.sp,
+                                    ),
+                                    SizedBox(width: 3.w),
+                                    Text(
+                                      'LIVE',
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 9.sp,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                        SizedBox(height: 4.h),
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.access_time,
+                              color: AppTheme.textSecondary,
+                              size: 14.sp,
+                            ),
+                            SizedBox(width: 4.w),
+                            Text(
+                              _formatTime(dateTime),
+                              style: TextStyle(
+                                color: AppTheme.textSecondary,
+                                fontSize: 12.sp,
+                              ),
+                            ),
+                            if (event.location != null) ...[
+                              SizedBox(width: 12.w),
+                              Icon(
+                                Icons.place,
+                                color: AppTheme.textSecondary,
+                                size: 14.sp,
+                              ),
+                              SizedBox(width: 4.w),
+                              Expanded(
+                                child: Text(
+                                  event.location!,
+                                  style: TextStyle(
+                                    color: AppTheme.textSecondary,
+                                    fontSize: 12.sp,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  Icon(
+                    canLaunchStream ? Icons.play_circle_fill : Icons.chevron_right,
+                    color: canLaunchStream ? Colors.red : AppTheme.textSecondary,
+                    size: 24.sp,
+                  ),
+                ],
               ),
-              Icon(
-                Icons.chevron_right,
-                color: AppTheme.textSecondary,
-                size: 24.sp,
-              ),
-            ],
-          ),
+            ),
+          );
+        }).toList(),
+      );
+    });
+  }
+
+  String _getMonthAbbreviation(int month) {
+    const months = [
+      'JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN',
+      'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'
+    ];
+    return months[month - 1];
+  }
+
+  String _formatTime(DateTime dateTime) {
+    final hour = dateTime.hour;
+    final minute = dateTime.minute.toString().padLeft(2, '0');
+    final period = hour >= 12 ? 'PM' : 'AM';
+    final displayHour = hour > 12 ? hour - 12 : (hour == 0 ? 12 : hour);
+    return '$displayHour:$minute $period';
+  }
+
+  Future<void> _launchStream(String url) async {
+    try {
+      final uri = Uri.parse(url);
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+      } else {
+        Get.snackbar(
+          'Error',
+          'Could not open stream',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
         );
-      }).toList(),
-    );
+      }
+    } catch (e) {
+      Get.snackbar(
+        'Error',
+        'Failed to launch stream: $e',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+    }
   }
 
   Widget _buildBottomNavBar() {
