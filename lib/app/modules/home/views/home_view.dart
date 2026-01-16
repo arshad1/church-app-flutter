@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:church_app/app/routes/app_pages.dart';
+import 'package:intl/intl.dart';
 import '../controllers/home_controller.dart';
 
 class HomeView extends GetView<HomeController> {
@@ -105,104 +106,112 @@ class HomeView extends GetView<HomeController> {
   }
 
   Widget _buildVerseCard() {
-    return Container(
-      width: double.infinity,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(24.r),
-        image: const DecorationImage(
-          image: AssetImage('assets/images/verse_bg.png'),
-          fit: BoxFit.cover,
-        ),
-      ),
-      child: Container(
+    return Obx(() {
+      final verse = controller.bibleVerse.value;
+      if (verse == null) {
+        return const SizedBox.shrink(); // Hide if no verse available
+      }
+
+      return Container(
+        width: double.infinity,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(24.r),
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              Colors.black.withValues(alpha: 0.1),
-              Colors.black.withValues(alpha: 0.7),
-            ],
+          image: const DecorationImage(
+            image: AssetImage('assets/images/verse_bg.png'),
+            fit: BoxFit.cover,
           ),
         ),
-        padding: EdgeInsets.all(20.w),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
-              decoration: BoxDecoration(
-                color: AppTheme.primary,
-                borderRadius: BorderRadius.circular(20.r),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    Icons.wb_sunny_outlined,
-                    color: Colors.white,
-                    size: 14.sp,
-                  ),
-                  SizedBox(width: 6.w),
-                  Text(
-                    'VERSE OF THE DAY',
-                    style: TextStyle(
+        child: Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(24.r),
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [
+                Colors.black.withValues(alpha: 0.1),
+                Colors.black.withValues(alpha: 0.7),
+              ],
+            ),
+          ),
+          padding: EdgeInsets.all(20.w),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
+                decoration: BoxDecoration(
+                  color: AppTheme.primary,
+                  borderRadius: BorderRadius.circular(20.r),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.wb_sunny_outlined,
                       color: Colors.white,
-                      fontSize: 10.sp,
-                      fontWeight: FontWeight.bold,
+                      size: 14.sp,
                     ),
+                    SizedBox(width: 6.w),
+                    Text(
+                      'VERSE OF THE DAY',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 10.sp,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              SizedBox(height: 12.h),
+              Text(
+                '"${verse.content}"', // Dynamic content
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 18.sp,
+                  fontWeight: FontWeight.bold,
+                  height: 1.3,
+                ),
+              ),
+              SizedBox(height: 8.h),
+              if (verse.title != null) // Dynamic title/reference part 2
+                Text(
+                  verse.title!,
+                  style: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.9),
+                    fontSize: 12.sp,
+                    height: 1.4,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              SizedBox(height: 16.h),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    _formatDate(verse.date), // Formatted date
+                    style: TextStyle(
+                      color: AppTheme.primary,
+                      fontSize: 14.sp,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  Container(
+                    padding: EdgeInsets.all(8.w),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.2),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(Icons.share, color: Colors.white, size: 16.sp),
                   ),
                 ],
               ),
-            ),
-            SizedBox(height: 12.h),
-            Text(
-              '"For I know the plans I have for you..."',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 18.sp,
-                fontWeight: FontWeight.bold,
-                height: 1.3,
-              ),
-            ),
-            SizedBox(height: 8.h),
-            Text(
-              'declares the Lord, plans for welfare and not for evil, to give you a future and a hope.',
-              style: TextStyle(
-                color: Colors.white.withValues(alpha: 0.9),
-                fontSize: 12.sp,
-                height: 1.4,
-              ),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-            ),
-            SizedBox(height: 16.h),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'Jeremiah 29:11',
-                  style: TextStyle(
-                    color: AppTheme.primary,
-                    fontSize: 14.sp,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                Container(
-                  padding: EdgeInsets.all(8.w),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.2),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(Icons.share, color: Colors.white, size: 16.sp),
-                ),
-              ],
-            ),
-          ],
+            ],
+          ),
         ),
-      ),
-    );
+      );
+    });
   }
 
   Widget _buildQuickActions() {
@@ -649,5 +658,14 @@ class HomeView extends GetView<HomeController> {
         ],
       ),
     );
+  }
+
+  String _formatDate(String dateStr) {
+    try {
+      final date = DateTime.parse(dateStr);
+      return DateFormat('MMMM d, yyyy').format(date);
+    } catch (_) {
+      return dateStr;
+    }
   }
 }

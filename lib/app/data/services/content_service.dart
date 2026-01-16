@@ -2,6 +2,7 @@ import 'package:get/get.dart';
 import '../../core/network/api_client.dart';
 import '../models/announcement.dart';
 import '../models/event.dart';
+import '../models/bible_verse.dart';
 
 class ContentService extends GetxService {
   final ApiClient _client = ApiClient();
@@ -28,6 +29,18 @@ class ContentService extends GetxService {
       return data.map((json) => Event.fromJson(json)).toList();
     } catch (e) {
       // print("Error fetching events: $e");
+      return [];
+    }
+  }
+
+  Future<List<BibleVerse>> getBibleVerses() async {
+    try {
+      final response = await _client.get('/content/BIBLE_VERSE');
+      final List<dynamic> data = response.data;
+      print("Bible Verse Data: $data"); // Debug print
+      return data.map((json) => BibleVerse.fromJson(json)).toList();
+    } catch (e) {
+      print("Error fetching bible verses: $e");
       return [];
     }
   }
