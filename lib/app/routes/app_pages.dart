@@ -14,6 +14,8 @@ import '../modules/events/bindings/events_binding.dart';
 import '../modules/events/views/events_view.dart';
 import '../modules/media/bindings/media_binding.dart';
 import '../modules/media/views/media_view.dart';
+import '../modules/media/bindings/album_detail_binding.dart';
+import '../modules/media/views/album_detail_view.dart';
 
 part 'app_routes.dart';
 
@@ -57,6 +59,11 @@ class AppPages {
       name: _Paths.media,
       page: () => const MediaView(),
       binding: MediaBinding(),
+    ),
+    GetPage(
+      name: _Paths.albumDetail,
+      page: () => const AlbumDetailView(),
+      binding: AlbumDetailBinding(),
     ),
   ];
 }
