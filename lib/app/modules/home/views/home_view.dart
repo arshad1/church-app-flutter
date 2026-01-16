@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:church_app/app/routes/app_pages.dart';
 import 'package:intl/intl.dart';
+import 'package:share_plus/share_plus.dart';
 import '../controllers/home_controller.dart';
 
 class HomeView extends GetView<HomeController> {
@@ -197,13 +198,25 @@ class HomeView extends GetView<HomeController> {
                       fontWeight: FontWeight.w600,
                     ),
                   ),
-                  Container(
-                    padding: EdgeInsets.all(8.w),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.2),
-                      shape: BoxShape.circle,
+                  GestureDetector(
+                    onTap: () {
+                      Share.share(
+                        '"${verse.content}" - ${verse.title ?? verse.date}',
+                        subject: 'Verse of the Day',
+                      );
+                    },
+                    child: Container(
+                      padding: EdgeInsets.all(8.w),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.2),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        Icons.share,
+                        color: Colors.white,
+                        size: 16.sp,
+                      ),
                     ),
-                    child: Icon(Icons.share, color: Colors.white, size: 16.sp),
                   ),
                 ],
               ),
