@@ -172,15 +172,50 @@ class ProfileView extends GetView<ProfileController> {
               ),
             ),
             const SizedBox(width: 12),
-            Text(
-              'Since 2015', // This could be dynamic based on createdAt
-              style: const TextStyle(
-                color: AppTheme.textSecondary,
-                fontSize: 14,
+            if (member.createdAt != null)
+              Text(
+                'Since ${member.createdAt!.year}',
+                style: const TextStyle(
+                  color: AppTheme.textSecondary,
+                  fontSize: 14,
+                ),
               ),
-            ),
           ],
         ),
+        if (member.family?.houses != null && member.houseId != null) ...[
+          const SizedBox(height: 8),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+            decoration: BoxDecoration(
+              color: AppTheme.primary.withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: AppTheme.primary.withValues(alpha: 0.3),
+              ),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.home, color: AppTheme.primary, size: 16),
+                const SizedBox(width: 8),
+                Text(
+                  member.family!.houses!
+                          .firstWhere(
+                            (h) => h.id == member.houseId,
+                            orElse: () => member.family!.houses!.first,
+                          )
+                          .name ??
+                      'Unknown House',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ],
     );
   }
@@ -262,8 +297,11 @@ class ProfileView extends GetView<ProfileController> {
                     return _buildAddFamilyButton();
                   }
                   final fMember = familyMembers[index];
-                  // Just show first name
-                  final firstName = (fMember.name ?? '?').split(' ')[0];
+                  // Show full name
+                  final fullName = fMember.name ?? '?';
+                  final firstName = fullName.split(
+                    ' ',
+                  )[0]; // Still use first char for avatar
                   return GestureDetector(
                     onTap: () =>
                         Get.to(() => EditFamilyMemberView(member: fMember)),
@@ -277,7 +315,7 @@ class ProfileView extends GetView<ProfileController> {
                               : null,
                           child: fMember.profileImage == null
                               ? Text(
-                                  firstName[0],
+                                  firstName.isNotEmpty ? firstName[0] : '?',
                                   style: const TextStyle(
                                     color: Colors.white,
                                     fontSize: 24,
@@ -287,7 +325,7 @@ class ProfileView extends GetView<ProfileController> {
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          firstName,
+                          fullName,
                           style: const TextStyle(color: Colors.white),
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -341,29 +379,29 @@ class ProfileView extends GetView<ProfileController> {
           ),
           const SizedBox(height: 16),
           // Example items - in real app, these would come from member.sacraments or similar
-          _buildJourneyCard(
-            icon: Icons.water_drop,
-            title: "Baptism",
-            date: "Oct 12, 1988",
-            location: "St. Peter's Cathedral",
-            color: const Color(0xFF3B46F6),
-          ),
-          const SizedBox(height: 12),
-          _buildJourneyCard(
-            icon: Icons.church,
-            title: "Confirmation",
-            date: "May 20, 2002",
-            location: "St. Mary's Church",
-            color: const Color(0xFFF97316),
-          ),
-          const SizedBox(height: 12),
-          _buildJourneyCard(
-            icon: Icons.favorite,
-            title: "Holy Matrimony",
-            date: "Jun 15, 2015",
-            location: "Sacred Heart Chapel",
-            color: const Color(0xFFEC4899),
-          ),
+          // Real Sacraments Data
+          if (member.sacraments == null || member.sacraments!.isEmpty)
+            const Text(
+              "No spiritual journey data available.",
+              style: TextStyle(color: AppTheme.textSecondary),
+            )
+          else
+            ...member.sacraments!.map((sacrament) {
+              return Column(
+                children: [
+                  _buildJourneyCard(
+                    icon: _getSacramentIcon(sacrament.type),
+                    title: sacrament.type ?? 'Unknown',
+                    date:
+                        sacrament.date?.toString().split(' ')[0] ??
+                        'Unknown Date',
+                    location: sacrament.details ?? 'No details',
+                    color: _getSacramentColor(sacrament.type),
+                  ),
+                  const SizedBox(height: 12),
+                ],
+              );
+            }),
         ],
       ),
     );
@@ -493,5 +531,39 @@ class ProfileView extends GetView<ProfileController> {
         ],
       ),
     );
+  }
+
+  IconData _getSacramentIcon(String? type) {
+    if (type == null) return Icons.star;
+    switch (type.toUpperCase()) {
+      case 'BAPTISM':
+        return Icons.water_drop;
+      case 'CONFIRMATION':
+        return Icons.church;
+      case 'MARRIAGE':
+      case 'HOLY MATRIMONY':
+        return Icons.favorite;
+      case 'COMMUNION':
+        return Icons.wine_bar;
+      default:
+        return Icons.stars;
+    }
+  }
+
+  Color _getSacramentColor(String? type) {
+    if (type == null) return AppTheme.primary;
+    switch (type.toUpperCase()) {
+      case 'BAPTISM':
+        return const Color(0xFF3B46F6);
+      case 'CONFIRMATION':
+        return const Color(0xFFF97316);
+      case 'MARRIAGE':
+      case 'HOLY MATRIMONY':
+        return const Color(0xFFEC4899);
+      case 'COMMUNION':
+        return const Color(0xFF10B981);
+      default:
+        return AppTheme.primary;
+    }
   }
 }

@@ -40,18 +40,7 @@ class LoginController extends GetxController {
     if (email.isEmpty || password.isEmpty) {
       Get.snackbar(
         "Required",
-        "Please enter both email and password",
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.orange.withValues(alpha: 0.8),
-        colorText: Colors.white,
-      );
-      return;
-    }
-
-    if (!GetUtils.isEmail(email)) {
-      Get.snackbar(
-        "Invalid Email",
-        "Please enter a valid email address",
+        "Please enter both username/email and password",
         snackPosition: SnackPosition.BOTTOM,
         backgroundColor: Colors.orange.withValues(alpha: 0.8),
         colorText: Colors.white,
@@ -71,7 +60,7 @@ class LoginController extends GetxController {
       await _storage.write('user', user);
 
       // Navigate to Landing Page
-      Get.offAllNamed(Routes.landing);
+      Get.offAllNamed(Routes.home);
     } catch (e) {
       String message = "Login failed";
       if (e is DioException) {

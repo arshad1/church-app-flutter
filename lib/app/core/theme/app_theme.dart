@@ -9,6 +9,7 @@ class AppTheme {
   static const Color secondary = Color(0xFFF97316); // Orange for notices
   static const Color textPrimary = Colors.white;
   static const Color textSecondary = Color(0xFF9CA3AF); // Light gray text
+  static const Color borderColor = Color(0xFF374151); // Gray 700
 
   static final ThemeData light = ThemeData(
     primarySwatch: Colors.blue,

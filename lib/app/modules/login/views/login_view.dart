@@ -25,25 +25,12 @@ class LoginView extends GetView<LoginController> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Top Navigation (Back Button)
-              GestureDetector(
-                onTap: () => Get.back(),
-                child: Container(
-                  width: 48,
-                  height: 48,
-                  decoration: const BoxDecoration(
-                    color: Colors.transparent,
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(Icons.arrow_back, color: textPrimary),
-                ),
-              ),
               const SizedBox(height: 24),
 
               // Hero Image / Logo Area
               Container(
                 width: double.infinity,
-                height: 200,
+                height: 300,
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(12),
                   image: const DecorationImage(
@@ -112,7 +99,7 @@ class LoginView extends GetView<LoginController> {
               // Login Form
               // Email Field
               const Text(
-                'Email Address',
+                'Email or Username',
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
@@ -130,14 +117,17 @@ class LoginView extends GetView<LoginController> {
                   controller: controller.emailController,
                   style: const TextStyle(color: textPrimary),
                   decoration: const InputDecoration(
-                    hintText: 'Enter your email',
+                    hintText: 'Enter your email or username',
                     hintStyle: TextStyle(color: textSecondary),
                     border: InputBorder.none,
                     contentPadding: EdgeInsets.symmetric(
                       horizontal: 16,
                       vertical: 14,
                     ),
-                    suffixIcon: Icon(Icons.mail_outline, color: textSecondary),
+                    suffixIcon: Icon(
+                      Icons.person_outline,
+                      color: textSecondary,
+                    ),
                   ),
                 ),
               ),
@@ -186,30 +176,6 @@ class LoginView extends GetView<LoginController> {
                 ),
               ),
 
-              // Forgot Password
-              Align(
-                alignment: Alignment.centerRight,
-                child: Padding(
-                  padding: const EdgeInsets.only(top: 8.0),
-                  child: TextButton(
-                    onPressed: () {},
-                    style: TextButton.styleFrom(
-                      padding: EdgeInsets.zero,
-                      minimumSize: Size.zero,
-                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                    ),
-                    child: const Text(
-                      'Forgot Password?',
-                      style: TextStyle(
-                        color: primaryColor,
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-
               const SizedBox(height: 32),
 
               // Sign In Button
@@ -251,99 +217,8 @@ class LoginView extends GetView<LoginController> {
 
               const SizedBox(height: 32),
 
-              // Divider
-              Row(
-                children: [
-                  Expanded(child: Container(height: 1, color: borderColor)),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                    child: const Text(
-                      'Or continue with',
-                      style: TextStyle(
-                        color: textSecondary,
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ),
-                  Expanded(child: Container(height: 1, color: borderColor)),
-                ],
-              ),
-
-              const SizedBox(height: 32),
-
-              // Social Logins
-              Row(
-                children: [
-                  Expanded(child: _buildSocialButton(Icons.apple, 'Apple')),
-                  const SizedBox(width: 16),
-                  Expanded(child: _buildSocialButton(Icons.language, 'Google')),
-                ],
-              ),
-
-              const SizedBox(height: 32),
-
-              // Register Link
-              Center(
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Text(
-                      "Don't have an account?",
-                      style: TextStyle(color: textSecondary, fontSize: 16),
-                    ),
-                    TextButton(
-                      onPressed: () {},
-                      child: const Text(
-                        'Register',
-                        style: TextStyle(
-                          color: primaryColor,
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
               const SizedBox(height: 16),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSocialButton(IconData icon, String label) {
-    const surfaceColor = Color(0xFF1C2127);
-    const borderColor = Color(0xFF3B4754);
-    const textPrimary = Colors.white;
-
-    return Container(
-      height: 48,
-      decoration: BoxDecoration(
-        color: surfaceColor,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: borderColor),
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: () {},
-          borderRadius: BorderRadius.circular(12),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(icon, size: 20, color: textPrimary),
-              const SizedBox(width: 8),
-              Text(
-                label,
-                style: const TextStyle(
-                  color: textPrimary,
-                  fontWeight: FontWeight.w600,
-                  fontSize: 16,
-                ),
-              ),
+              const SizedBox(height: 16),
             ],
           ),
         ),

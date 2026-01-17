@@ -1,4 +1,5 @@
 import 'family_model.dart';
+import 'sacrament_model.dart';
 
 class MemberModel {
   int? id;
@@ -13,7 +14,9 @@ class MemberModel {
   int? familyId;
   int? spouseId;
   int? houseId;
+  DateTime? createdAt;
   FamilyModel? family;
+  List<SacramentModel>? sacraments;
 
   MemberModel({
     this.id,
@@ -27,7 +30,9 @@ class MemberModel {
     this.gender,
     this.familyId,
     this.spouseId,
+    this.createdAt,
     this.family,
+    this.sacraments,
   });
 
   MemberModel.fromJson(Map<String, dynamic> json) {
@@ -43,9 +48,18 @@ class MemberModel {
     familyId = json['familyId'];
     spouseId = json['spouseId'];
     houseId = json['houseId'];
+    createdAt = json['createdAt'] != null
+        ? DateTime.tryParse(json['createdAt'])
+        : null;
     family = json['family'] != null
         ? FamilyModel.fromJson(json['family'])
         : null;
+    if (json['sacraments'] != null) {
+      sacraments = <SacramentModel>[];
+      json['sacraments'].forEach((v) {
+        sacraments!.add(SacramentModel.fromJson(v));
+      });
+    }
   }
 
   Map<String, dynamic> toJson() {
@@ -62,8 +76,12 @@ class MemberModel {
     data['familyId'] = familyId;
     data['spouseId'] = spouseId;
     data['houseId'] = houseId;
+    data['createdAt'] = createdAt?.toIso8601String();
     if (family != null) {
       data['family'] = family!.toJson();
+    }
+    if (sacraments != null) {
+      data['sacraments'] = sacraments!.map((v) => v.toJson()).toList();
     }
     return data;
   }

@@ -14,7 +14,8 @@ class _AddFamilyMemberViewState extends State<AddFamilyMemberView> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _phoneController = TextEditingController();
-  final _roleController = TextEditingController();
+
+  String? _selectedRole;
 
   DateTime? _selectedDate;
   String? _selectedGender;
@@ -62,10 +63,28 @@ class _AddFamilyMemberViewState extends State<AddFamilyMemberView> {
                 icon: Icons.person,
               ),
               const SizedBox(height: 16),
-              _buildTextField(
-                controller: _roleController,
-                label: 'Relationship (e.g. Wife, Son)',
+              _buildDropdownField(
+                label: 'Relationship',
                 icon: Icons.people,
+                value: _selectedRole,
+                items:
+                    [
+                          'HEAD',
+                          'SPOUSE',
+                          'FATHER',
+                          'MOTHER',
+                          'SON',
+                          'DAUGHTER',
+                          'GRANDFATHER',
+                          'GRANDMOTHER',
+                          'MEMBER',
+                        ]
+                        .map(
+                          (item) =>
+                              DropdownMenuItem(value: item, child: Text(item)),
+                        )
+                        .toList(),
+                onChanged: (v) => setState(() => _selectedRole = v),
               ),
               const SizedBox(height: 16),
               _buildDropdownField(
@@ -177,6 +196,14 @@ class _AddFamilyMemberViewState extends State<AddFamilyMemberView> {
                         ? null
                         : () {
                             if (_formKey.currentState!.validate()) {
+                              if (_selectedRole == null) {
+                                Get.snackbar(
+                                  'Error',
+                                  'Please select relationship',
+                                  colorText: Colors.white,
+                                );
+                                return;
+                              }
                               if (_selectedGender == null) {
                                 Get.snackbar(
                                   'Error',
@@ -187,7 +214,7 @@ class _AddFamilyMemberViewState extends State<AddFamilyMemberView> {
                               }
                               final data = {
                                 'name': _nameController.text,
-                                'familyRole': _roleController.text,
+                                'familyRole': _selectedRole,
                                 'gender': _selectedGender,
                                 'phone': _phoneController.text.isNotEmpty
                                     ? _phoneController.text
