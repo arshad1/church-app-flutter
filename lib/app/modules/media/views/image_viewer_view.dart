@@ -67,7 +67,7 @@ class _ImageViewerViewState extends State<ImageViewerView> {
                           child: CircularProgressIndicator(
                             value: loadingProgress.expectedTotalBytes != null
                                 ? loadingProgress.cumulativeBytesLoaded /
-                                    loadingProgress.expectedTotalBytes!
+                                      loadingProgress.expectedTotalBytes!
                                 : null,
                           ),
                         );
@@ -101,7 +101,7 @@ class _ImageViewerViewState extends State<ImageViewerView> {
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
                     colors: [
-                      Colors.black.withOpacity(0.6),
+                      Colors.black.withValues(alpha: 0.6),
                       Colors.transparent,
                     ],
                   ),
@@ -114,7 +114,7 @@ class _ImageViewerViewState extends State<ImageViewerView> {
                       child: Container(
                         padding: EdgeInsets.all(8.w),
                         decoration: BoxDecoration(
-                          color: Colors.black.withOpacity(0.3),
+                          color: Colors.black.withValues(alpha: 0.3),
                           shape: BoxShape.circle,
                         ),
                         child: Icon(
@@ -130,7 +130,7 @@ class _ImageViewerViewState extends State<ImageViewerView> {
                         vertical: 6.h,
                       ),
                       decoration: BoxDecoration(
-                        color: Colors.black.withOpacity(0.5),
+                        color: Colors.black.withValues(alpha: 0.5),
                         borderRadius: BorderRadius.circular(16.r),
                       ),
                       child: Text(
@@ -175,7 +175,7 @@ class _ImageViewerViewState extends State<ImageViewerView> {
                       decoration: BoxDecoration(
                         color: currentIndex == index
                             ? AppTheme.primary
-                            : Colors.white.withOpacity(0.3),
+                            : Colors.white.withValues(alpha: 0.3),
                         borderRadius: BorderRadius.circular(4.r),
                       ),
                     );

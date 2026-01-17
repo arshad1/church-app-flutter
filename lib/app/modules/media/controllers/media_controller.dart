@@ -19,29 +19,15 @@ class MediaController extends GetxController {
   Future<void> fetchGalleryContent() async {
     isLoading.value = true;
     try {
-      print("=== Fetching Gallery Content ===");
-
       // Fetch categories
       final fetchedCategories = await _contentService.getGalleryCategories();
-      print("Fetched ${fetchedCategories.length} categories");
-      for (var cat in fetchedCategories) {
-        print("Category: id=${cat.id}, title=${cat.title}");
-      }
       categories.assignAll(fetchedCategories);
 
       // Fetch albums
       final fetchedAlbums = await _contentService.getGalleryAlbums();
-      print("Fetched ${fetchedAlbums.length} albums");
-      for (var album in fetchedAlbums) {
-        print(
-          "Album: id=${album.id}, title=${album.title}, categoryId=${album.categoryId}",
-        );
-      }
       albums.assignAll(fetchedAlbums);
-
-      print("=== Gallery Content Loaded ===");
     } catch (e) {
-      print("Error in MediaController: $e");
+      // Handle error cleanly
     } finally {
       isLoading.value = false;
     }

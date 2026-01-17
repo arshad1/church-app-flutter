@@ -21,7 +21,7 @@ class EventsController extends GetxController {
       final fetchedEvents = await _contentService.getEvents(type: 'upcoming');
       events.assignAll(fetchedEvents);
     } catch (e) {
-      print("Error fetching events: $e");
+      // print("Error fetching events: $e");
     } finally {
       isLoading.value = false;
     }
@@ -30,7 +30,9 @@ class EventsController extends GetxController {
   List<Event> get filteredEvents {
     switch (selectedFilter.value) {
       case 'Live & Streamed':
-        return events.where((event) => event.isLive || event.isStreamed).toList();
+        return events
+            .where((event) => event.isLive || event.isStreamed)
+            .toList();
       case 'Featured':
         return events.where((event) => event.isFeatured).toList();
       case 'All Events':

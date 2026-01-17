@@ -1,148 +1,182 @@
-import 'package:church_app/app/core/widgets/bottom_nav_bar.dart';
-import 'package:church_app/app/routes/app_pages.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../data/models/member_model.dart';
+import '../../../core/widgets/bottom_nav_bar.dart';
+import '../../../routes/app_pages.dart';
 import '../controllers/profile_controller.dart';
+import 'add_family_member_view.dart';
+import 'edit_profile_view.dart';
+import 'edit_family_member_view.dart';
 
 class ProfileView extends GetView<ProfileController> {
   const ProfileView({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return DefaultTabController(
-      length: 3,
-      child: Scaffold(
+    return Scaffold(
+      backgroundColor: AppTheme.background,
+      appBar: AppBar(
         backgroundColor: AppTheme.background,
-        appBar: _buildAppBar(),
-        body: SafeArea(
-          child: Column(
-            children: [
-              Expanded(
-                child: SingleChildScrollView(
+        elevation: 0,
+        leading: Navigator.canPop(context)
+            ? IconButton(
+                icon: const Icon(Icons.arrow_back, color: Colors.white),
+                onPressed: () => Navigator.of(context).pop(),
+              )
+            : null,
+        title: const Text('My Profile', style: TextStyle(color: Colors.white)),
+        centerTitle: true,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.settings, color: AppTheme.primary),
+            onPressed: () {
+              // Navigate to settings
+            },
+          ),
+        ],
+      ),
+      body: SafeArea(
+        child: Column(
+          children: [
+            Expanded(
+              child: Obx(() {
+                if (controller.isLoading.value) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+
+                final user = controller.user.value;
+                if (user == null || user.member == null) {
+                  return const Center(
+                    child: Text(
+                      'No profile data',
+                      style: TextStyle(color: Colors.white),
+                    ),
+                  );
+                }
+
+                final member = user.member!;
+
+                return DefaultTabController(
+                  length: 3,
                   child: Column(
                     children: [
-                      SizedBox(height: 20.h),
-                      _buildProfileHeader(),
-                      SizedBox(height: 24.h),
-                      _buildTabBar(),
-                      SizedBox(
-                        height: 600.h, // Fixed height for TabBarView in a ScrollView or use nested scroll
+                      const SizedBox(height: 20),
+                      // Profile Header
+                      _buildProfileHeader(member),
+                      const SizedBox(height: 20),
+                      // Tabs
+                      const TabBar(
+                        labelColor: AppTheme.primary,
+                        unselectedLabelColor: AppTheme.textSecondary,
+                        indicatorColor: AppTheme.primary,
+                        tabs: [
+                          Tab(text: "Personal"),
+                          Tab(text: "Family"),
+                          Tab(text: "History"),
+                        ],
+                      ),
+                      Expanded(
                         child: TabBarView(
                           children: [
-                            _buildPersonalTab(),
-                            _buildPlaceholderTab('Family'),
-                            _buildPlaceholderTab('History'),
+                            _buildPersonalTab(member, user.email),
+                            _buildFamilyTab(member),
+                            _buildHistoryTab(member),
                           ],
                         ),
                       ),
                     ],
                   ),
-                ),
-              ),
-              const AppBottomNavBar(currentRoute: Routes.profile),
-            ],
-          ),
-        ),
-        floatingActionButton: FloatingActionButton(
-          onPressed: () {},
-          backgroundColor: AppTheme.primary,
-          child: Icon(Icons.edit, color: Colors.white, size: 24.sp),
+                );
+              }),
+            ),
+            const AppBottomNavBar(currentRoute: Routes.profile),
+          ],
         ),
       ),
     );
   }
 
-  AppBar _buildAppBar() {
-    return AppBar(
-      backgroundColor: AppTheme.background,
-      elevation: 0,
-      leading: IconButton(
-        icon: Icon(Icons.arrow_back, color: Colors.white, size: 24.sp),
-        onPressed: () => Get.back(),
-      ),
-      title: Text(
-        'My Profile',
-        style: TextStyle(
-          color: Colors.white,
-          fontSize: 18.sp,
-          fontWeight: FontWeight.bold,
-        ),
-      ),
-      centerTitle: true,
-      actions: [
-        IconButton(
-          icon: Icon(Icons.settings, color: AppTheme.primary, size: 24.sp),
-          onPressed: () {},
-        ),
-      ],
-    );
-  }
-
-  Widget _buildProfileHeader() {
+  Widget _buildProfileHeader(MemberModel member) {
     return Column(
       children: [
         Stack(
           children: [
-            CircleAvatar(
-              radius: 50.r,
-              backgroundImage: const AssetImage('assets/images/avatar.png'),
+            Container(
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(color: AppTheme.surface, width: 4),
+              ),
+              child: CircleAvatar(
+                radius: 50,
+                backgroundColor: AppTheme.surface,
+                backgroundImage: member.profileImage != null
+                    ? NetworkImage(member.profileImage!)
+                    : null, // Add a placeholder image asset if needed
+                child: member.profileImage == null
+                    ? const Icon(Icons.person, size: 50, color: Colors.grey)
+                    : null,
+              ),
             ),
             Positioned(
-              bottom: 0,
               right: 0,
-              child: Container(
-                padding: EdgeInsets.all(6.w),
-                decoration: BoxDecoration(
-                  color: AppTheme.primary,
-                  shape: BoxShape.circle,
-                  border: Border.all(color: AppTheme.background, width: 3.w),
+              bottom: 0,
+              child: GestureDetector(
+                onTap: () => Get.to(() => const EditProfileView()),
+                child: Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: const BoxDecoration(
+                    color: AppTheme.primary,
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.edit, color: Colors.white, size: 16),
                 ),
-                child: Icon(Icons.edit, color: Colors.white, size: 14.sp),
               ),
             ),
           ],
         ),
-        SizedBox(height: 16.h),
+        const SizedBox(height: 12),
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Text(
-              'Sarah Smith',
-              style: TextStyle(
+              member.name ?? 'Guest',
+              style: const TextStyle(
                 color: Colors.white,
-                fontSize: 22.sp,
+                fontSize: 22,
                 fontWeight: FontWeight.bold,
               ),
             ),
-            SizedBox(width: 6.w),
-            Icon(Icons.verified, color: AppTheme.primary, size: 20.sp),
+            const SizedBox(width: 8),
+            const Icon(Icons.verified, color: AppTheme.primary, size: 20),
           ],
         ),
-        SizedBox(height: 8.h),
+        const SizedBox(height: 8),
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Container(
-              padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
               decoration: BoxDecoration(
                 color: AppTheme.primary.withValues(alpha: 0.2),
-                borderRadius: BorderRadius.circular(8.r),
+                borderRadius: BorderRadius.circular(20),
               ),
               child: Text(
-                'ACTIVE MEMBER',
-                style: TextStyle(
+                (member.status ?? 'MEMBER').toUpperCase(),
+                style: const TextStyle(
                   color: AppTheme.primary,
-                  fontSize: 10.sp,
+                  fontSize: 12,
                   fontWeight: FontWeight.bold,
                 ),
               ),
             ),
-            SizedBox(width: 8.w),
+            const SizedBox(width: 12),
             Text(
-              'Since 2018',
-              style: TextStyle(color: AppTheme.textSecondary, fontSize: 12.sp),
+              'Since 2015', // This could be dynamic based on createdAt
+              style: const TextStyle(
+                color: AppTheme.textSecondary,
+                fontSize: 14,
+              ),
             ),
           ],
         ),
@@ -150,283 +184,234 @@ class ProfileView extends GetView<ProfileController> {
     );
   }
 
-  Widget _buildTabBar() {
-    return Container(
-      margin: EdgeInsets.symmetric(horizontal: 20.w),
-      decoration: const BoxDecoration(
-        border: Border(bottom: BorderSide(color: Color(0xFF374151), width: 1)),
-      ),
-      child: TabBar(
-        labelColor: AppTheme.primary,
-        unselectedLabelColor: AppTheme.textSecondary,
-        labelStyle: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w600),
-        indicatorColor: AppTheme.primary,
-        indicatorSize: TabBarIndicatorSize.tab,
-        tabs: const [
-          Tab(text: 'Personal'),
-          Tab(text: 'Family'),
-          Tab(text: 'History'),
+  Widget _buildPersonalTab(MemberModel member, String? email) {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildSectionHeader("Contact Information", onEdit: () {}),
+          const SizedBox(height: 16),
+          _buildInfoCard(
+            icon: Icons.email,
+            label: "EMAIL",
+            value: email ?? "No email",
+            isLocked: true,
+          ),
+          const SizedBox(height: 12),
+          _buildInfoCard(
+            icon: Icons.phone,
+            label: "PHONE",
+            value: member.phone ?? "No phone",
+          ),
+          const SizedBox(height: 12),
+          // Assuming address might come from Family model later, or added to Member
+          _buildInfoCard(
+            icon: Icons.location_on,
+            label: "HOME ADDRESS",
+            value: member.family?.address ?? "No address linked",
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildPersonalTab() {
+  Widget _buildFamilyTab(MemberModel member) {
+    final familyMembers = member.family?.members ?? [];
     return SingleChildScrollView(
-      padding: EdgeInsets.all(20.w),
+      padding: const EdgeInsets.all(20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                'Contact Information',
+              const Text(
+                "My Family",
                 style: TextStyle(
                   color: Colors.white,
-                  fontSize: 16.sp,
+                  fontSize: 18,
                   fontWeight: FontWeight.bold,
                 ),
               ),
               TextButton(
-                onPressed: () {},
-                child: Text(
-                  'Edit',
-                  style: TextStyle(color: AppTheme.primary, fontSize: 14.sp),
+                onPressed: () {
+                  // Manage family
+                },
+                child: const Text(
+                  "Manage",
+                  style: TextStyle(color: AppTheme.primary),
                 ),
               ),
             ],
           ),
-          SizedBox(height: 8.h),
-          _buildInfoCard(
-            Icons.email,
-            'EMAIL',
-            'sarah.smith@email.com',
-            isLocked: true,
-          ),
-          SizedBox(height: 12.h),
-          _buildInfoCard(Icons.phone, 'PHONE', '+1 (555) 987-6543'),
-          SizedBox(height: 12.h),
-          _buildInfoCard(
-            Icons.location_on,
-            'HOME ADDRESS',
-            '452 Willow Creek Blvd, Springfield, IL 62704',
-          ),
-          SizedBox(height: 32.h),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'My Family',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 16.sp,
-                  fontWeight: FontWeight.bold,
-                ),
+          const SizedBox(height: 16),
+          if (familyMembers.isEmpty)
+            const Text(
+              "No family members found.",
+              style: TextStyle(color: AppTheme.textSecondary),
+            )
+          else
+            SizedBox(
+              height: 120,
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                itemCount: familyMembers.length + 1, // +1 for Add button
+                separatorBuilder: (c, i) => const SizedBox(width: 16),
+                itemBuilder: (context, index) {
+                  if (index == familyMembers.length) {
+                    return _buildAddFamilyButton();
+                  }
+                  final fMember = familyMembers[index];
+                  // Just show first name
+                  final firstName = (fMember.name ?? '?').split(' ')[0];
+                  return GestureDetector(
+                    onTap: () =>
+                        Get.to(() => EditFamilyMemberView(member: fMember)),
+                    child: Column(
+                      children: [
+                        CircleAvatar(
+                          radius: 35,
+                          backgroundColor: AppTheme.surface,
+                          backgroundImage: fMember.profileImage != null
+                              ? NetworkImage(fMember.profileImage!)
+                              : null,
+                          child: fMember.profileImage == null
+                              ? Text(
+                                  firstName[0],
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 24,
+                                  ),
+                                )
+                              : null,
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          firstName,
+                          style: const TextStyle(color: Colors.white),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ),
+                  );
+                },
               ),
-              TextButton(
-                onPressed: () {},
-                child: Text(
-                  'Manage',
-                  style: TextStyle(color: AppTheme.primary, fontSize: 14.sp),
-                ),
-              ),
-            ],
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAddFamilyButton() {
+    return GestureDetector(
+      onTap: () => Get.to(() => const AddFamilyMemberView()),
+      child: Column(
+        children: [
+          Container(
+            width: 70,
+            height: 70,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: AppTheme.background,
+              border: Border.all(color: AppTheme.surface, width: 2),
+            ),
+            child: const Icon(Icons.add, color: AppTheme.textSecondary),
           ),
-          SizedBox(height: 16.h),
-          _buildFamilyList(),
-          SizedBox(height: 32.h),
-          Text(
-            'Spiritual Journey',
+          const SizedBox(height: 8),
+          const Text("Add", style: TextStyle(color: AppTheme.textSecondary)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHistoryTab(MemberModel member) {
+    // Mock data for Spiritual Journey based on the design
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            "Spiritual Journey",
             style: TextStyle(
               color: Colors.white,
-              fontSize: 16.sp,
+              fontSize: 18,
               fontWeight: FontWeight.bold,
             ),
           ),
-          SizedBox(height: 16.h),
+          const SizedBox(height: 16),
+          // Example items - in real app, these would come from member.sacraments or similar
           _buildJourneyCard(
-            Icons.water_drop,
-            'Baptism',
-            'Oct 12, 1995 • St. Peter\'s Cathedral',
-            AppTheme.primary.withValues(alpha: 0.2),
-            AppTheme.primary,
+            icon: Icons.water_drop,
+            title: "Baptism",
+            date: "Oct 12, 1988",
+            location: "St. Peter's Cathedral",
+            color: const Color(0xFF3B46F6),
           ),
+          const SizedBox(height: 12),
           _buildJourneyCard(
-            Icons.volunteer_activism,
-            'Confirmation',
-            'May 20, 2010 • St. Mary\'s Church',
-            const Color(0xFFF97316).withValues(alpha: 0.2),
-            const Color(0xFFF97316),
+            icon: Icons.church,
+            title: "Confirmation",
+            date: "May 20, 2002",
+            location: "St. Mary's Church",
+            color: const Color(0xFFF97316),
           ),
+          const SizedBox(height: 12),
           _buildJourneyCard(
-            Icons.favorite,
-            'Holy Matrimony',
-            'Jun 15, 2018 • Sacred Heart Chapel',
-            Colors.pink.withValues(alpha: 0.2),
-            Colors.pink,
-            isLast: true,
+            icon: Icons.favorite,
+            title: "Holy Matrimony",
+            date: "Jun 15, 2015",
+            location: "Sacred Heart Chapel",
+            color: const Color(0xFFEC4899),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildInfoCard(
-    IconData icon,
-    String label,
-    String value, {
-    bool isLocked = false,
+  Widget _buildJourneyCard({
+    required IconData icon,
+    required String title,
+    required String date,
+    required String location,
+    required Color color,
   }) {
     return Container(
-      padding: EdgeInsets.all(16.w),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: AppTheme.surface,
-        borderRadius: BorderRadius.circular(16.r),
+        borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
         children: [
           Container(
-            padding: EdgeInsets.all(10.w),
+            padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: AppTheme.background,
-              shape: BoxShape.circle,
+              color: color.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(12),
             ),
-            child: Icon(icon, color: AppTheme.primary, size: 20.sp),
+            child: Icon(icon, color: color),
           ),
-          SizedBox(width: 16.w),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  label,
-                  style: TextStyle(
-                    color: AppTheme.textSecondary,
-                    fontSize: 10.sp,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 1.0,
-                  ),
-                ),
-                SizedBox(height: 4.h),
-                Text(
-                  value,
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 14.sp,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          if (isLocked)
-            Icon(Icons.lock, color: AppTheme.textSecondary, size: 18.sp),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildFamilyList() {
-    return Row(
-      children: [
-        _buildFamilyMember('Jane', 'assets/images/family_jane.png'),
-        SizedBox(width: 16.w),
-        _buildFamilyMember('Timmy', 'assets/images/family_timmy.png'),
-        SizedBox(width: 16.w),
-        Column(
-          children: [
-            Container(
-              width: 60.r,
-              height: 60.r,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: AppTheme.textSecondary,
-                  style: BorderStyle.solid,
-                ),
-              ),
-              child: Icon(
-                Icons.add,
-                color: AppTheme.textSecondary,
-                size: 24.sp,
-              ),
-            ),
-            SizedBox(height: 8.h),
-            Text(
-              'Add',
-              style: TextStyle(color: AppTheme.textSecondary, fontSize: 12.sp),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-
-  Widget _buildFamilyMember(String name, String asset) {
-    return Column(
-      children: [
-        CircleAvatar(radius: 30.r, backgroundImage: AssetImage(asset)),
-        SizedBox(height: 8.h),
-        Text(
-          name,
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 12.sp,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildJourneyCard(
-    IconData icon,
-    String title,
-    String date,
-    Color bg,
-    Color iconColor, {
-    bool isLast = false,
-  }) {
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
-      decoration: BoxDecoration(
-        color: AppTheme.surface,
-        border: Border(
-          bottom: isLast
-              ? BorderSide.none
-              : const BorderSide(color: Color(0xFF374151), width: 1),
-        ),
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: EdgeInsets.all(10.w),
-            decoration: BoxDecoration(
-              color: bg,
-              borderRadius: BorderRadius.circular(12.r),
-            ),
-            child: Icon(icon, color: iconColor, size: 24.sp),
-          ),
-          SizedBox(width: 16.w),
+          const SizedBox(width: 16),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   title,
-                  style: TextStyle(
+                  style: const TextStyle(
                     color: Colors.white,
-                    fontSize: 14.sp,
+                    fontSize: 16,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                SizedBox(height: 4.h),
+                const SizedBox(height: 4),
                 Text(
-                  date,
-                  style: TextStyle(
+                  "$date • $location",
+                  style: const TextStyle(
                     color: AppTheme.textSecondary,
-                    fontSize: 12.sp,
+                    fontSize: 12,
                   ),
                 ),
               ],
@@ -437,11 +422,76 @@ class ProfileView extends GetView<ProfileController> {
     );
   }
 
-  Widget _buildPlaceholderTab(String title) {
-    return Center(
-      child: Text(
-        '$title Content Coming Soon',
-        style: TextStyle(color: AppTheme.textSecondary, fontSize: 16.sp),
+  Widget _buildSectionHeader(String title, {VoidCallback? onEdit}) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          title,
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        if (onEdit != null)
+          TextButton(
+            onPressed: onEdit,
+            child: const Text(
+              "Edit",
+              style: TextStyle(color: AppTheme.primary),
+            ),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildInfoCard({
+    required IconData icon,
+    required String label,
+    required String value,
+    bool isLocked = false,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppTheme.surface,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: AppTheme.background,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(icon, color: AppTheme.primary, size: 20),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: const TextStyle(
+                    color: AppTheme.textSecondary,
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  value,
+                  style: const TextStyle(color: Colors.white, fontSize: 15),
+                ),
+              ],
+            ),
+          ),
+          if (isLocked)
+            const Icon(Icons.lock, color: AppTheme.textSecondary, size: 16),
+        ],
       ),
     );
   }

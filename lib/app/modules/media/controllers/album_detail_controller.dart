@@ -26,10 +26,12 @@ class AlbumDetailController extends GetxController {
   Future<void> fetchAlbumImages() async {
     isLoading.value = true;
     try {
-      final fetchedImages = await _contentService.getAlbumDetails(albumId.value);
+      final fetchedImages = await _contentService.getAlbumDetails(
+        albumId.value,
+      );
       images.assignAll(fetchedImages);
     } catch (e) {
-      print("Error fetching album images: $e");
+      // Handle error
     } finally {
       isLoading.value = false;
     }
@@ -37,10 +39,7 @@ class AlbumDetailController extends GetxController {
 
   void openImageViewer(int index) {
     Get.to(
-      () => ImageViewerView(
-        images: images,
-        initialIndex: index,
-      ),
+      () => ImageViewerView(images: images, initialIndex: index),
       transition: Transition.fade,
     );
   }

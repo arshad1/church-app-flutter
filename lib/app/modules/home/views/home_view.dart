@@ -201,6 +201,7 @@ class HomeView extends GetView<HomeController> {
                   ),
                   GestureDetector(
                     onTap: () {
+                      // ignore: deprecated_member_use
                       Share.share(
                         '"${verse.content}" - ${verse.title ?? verse.date}',
                         subject: 'Verse of the Day',

@@ -8,6 +8,8 @@ class ApiClient {
   final Dio _dio = Dio();
   final GetStorage _storage = GetStorage();
 
+  Dio get dio => _dio;
+
   ApiClient() {
     // Updated base URL to use the specified local IP address
     String baseUrl = 'http://192.168.0.187:3000/api';
@@ -54,7 +56,7 @@ class ApiClient {
       "Session Expired",
       "Please login again to continue",
       snackPosition: SnackPosition.BOTTOM,
-      backgroundColor: Colors.red.withOpacity(0.8),
+      backgroundColor: Colors.red.withValues(alpha: 0.8),
       colorText: Colors.white,
     );
   }

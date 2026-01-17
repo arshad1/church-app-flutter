@@ -14,8 +14,6 @@ class ContentService extends GetxService {
       final List<dynamic> data = response.data;
       return data.map((json) => Announcement.fromJson(json)).toList();
     } catch (e) {
-      // Return empty list on error to allow UI to show something or nothing cleanly
-      // print("Error fetching announcements: $e");
       return [];
     }
   }
@@ -29,7 +27,6 @@ class ContentService extends GetxService {
       final List<dynamic> data = response.data;
       return data.map((json) => Event.fromJson(json)).toList();
     } catch (e) {
-      // print("Error fetching events: $e");
       return [];
     }
   }
@@ -38,10 +35,8 @@ class ContentService extends GetxService {
     try {
       final response = await _client.get('/mobile/content/BIBLE_VERSE');
       final List<dynamic> data = response.data;
-      print("Bible Verse Data: $data"); // Debug print
       return data.map((json) => BibleVerse.fromJson(json)).toList();
     } catch (e) {
-      print("Error fetching bible verses: $e");
       return [];
     }
   }
@@ -49,7 +44,6 @@ class ContentService extends GetxService {
   Future<List<GalleryCategory>> getGalleryCategories() async {
     try {
       final response = await _client.get('/mobile/gallery/categories');
-      print("Categories Response: ${response.data}"); // Debug print
       final dynamic data = response.data;
       if (data is Map<String, dynamic> && data.containsKey('data')) {
         return (data['data'] as List)
@@ -60,7 +54,6 @@ class ContentService extends GetxService {
       }
       return [];
     } catch (e) {
-      print("Error fetching gallery categories: $e");
       return [];
     }
   }
@@ -85,7 +78,6 @@ class ContentService extends GetxService {
       }
       return [];
     } catch (e) {
-      print("Error fetching gallery albums: $e");
       return [];
     }
   }
@@ -109,7 +101,6 @@ class ContentService extends GetxService {
       }
       return [];
     } catch (e) {
-      print("Error fetching album details: $e");
       return [];
     }
   }
