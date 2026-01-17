@@ -7,6 +7,7 @@ import 'package:church_app/app/routes/app_pages.dart';
 import 'package:intl/intl.dart';
 import 'package:share_plus/share_plus.dart';
 import '../controllers/home_controller.dart';
+import '../../notifications/views/notification_view.dart';
 
 class HomeView extends GetView<HomeController> {
   const HomeView({super.key});
@@ -86,22 +87,26 @@ class HomeView extends GetView<HomeController> {
             ),
           ],
         ),
-        Stack(
-          children: [
-            Icon(Icons.notifications, color: Colors.white, size: 24.sp),
-            Positioned(
-              right: 0,
-              top: 0,
-              child: Container(
-                width: 8.r,
-                height: 8.r,
-                decoration: const BoxDecoration(
-                  color: Colors.red,
-                  shape: BoxShape.circle,
+        GestureDetector(
+          onTap: () => Get.to(() => const NotificationView()),
+          child: Stack(
+            children: [
+              Icon(Icons.notifications, color: Colors.white, size: 24.sp),
+              // TODO: Only show red dot if unread notifications exist
+              Positioned(
+                right: 0,
+                top: 0,
+                child: Container(
+                  width: 8.r,
+                  height: 8.r,
+                  decoration: const BoxDecoration(
+                    color: Colors.red,
+                    shape: BoxShape.circle,
+                  ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ],
     );
