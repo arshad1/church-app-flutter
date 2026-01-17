@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../../data/services/settings_service.dart';
 import '../controllers/login_controller.dart';
 
 class LoginView extends GetView<LoginController> {
@@ -58,11 +59,30 @@ class LoginView extends GetView<LoginController> {
                         color: primaryColor.withValues(alpha: 0.9),
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(
-                        Icons.church,
-                        color: Colors.white,
-                        size: 32,
-                      ),
+                      child: Obx(() {
+                        final settings =
+                            Get.find<SettingsService>().settings.value;
+                        return settings?.logoUrl != null
+                            ? ClipOval(
+                                child: Image.network(
+                                  settings!.logoUrl!,
+                                  width: 64,
+                                  height: 64,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (context, error, stackTrace) =>
+                                      const Icon(
+                                        Icons.church,
+                                        color: Colors.white,
+                                        size: 32,
+                                      ),
+                                ),
+                              )
+                            : const Icon(
+                                Icons.church,
+                                color: Colors.white,
+                                size: 32,
+                              );
+                      }),
                     ),
                   ),
                 ),

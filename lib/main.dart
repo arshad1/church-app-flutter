@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 
 import 'app/core/theme/app_theme.dart';
+import 'app/data/services/settings_service.dart';
 import 'app/data/services/auth_service.dart';
 import 'app/data/services/content_service.dart';
 import 'app/routes/app_pages.dart';
@@ -22,6 +23,7 @@ void main() async {
   // }
 
   // Initialize Global Services
+  await Get.putAsync(() => SettingsService().init());
   Get.put(AuthService(), permanent: true);
   // Get.put(NotificationService(), permanent: true);
   Get.put(ContentService(), permanent: true);
