@@ -172,6 +172,7 @@ class _EditProfileViewState extends State<EditProfileView> {
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
+                              color: Colors.white,
                             ),
                           ),
                   ),

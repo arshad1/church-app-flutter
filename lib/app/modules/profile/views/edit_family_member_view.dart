@@ -212,6 +212,7 @@ class _EditFamilyMemberViewState extends State<EditFamilyMemberView> {
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
+                              color: Colors.white,
                             ),
                           ),
                   ),

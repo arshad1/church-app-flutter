@@ -23,7 +23,7 @@ class ProfileView extends GetView<ProfileController> {
         leading: Navigator.canPop(context)
             ? IconButton(
                 icon: const Icon(Icons.arrow_back, color: Colors.white),
-                onPressed: () => Navigator.of(context).pop(),
+                onPressed: () => Get.back(),
               )
             : null,
         title: const Text('My Profile', style: TextStyle(color: Colors.white)),
@@ -274,7 +274,10 @@ class ProfileView extends GetView<ProfileController> {
                 onPressed: () => Get.to(() => const EditFamilyView()),
                 child: const Text(
                   "Edit Family",
-                  style: TextStyle(color: AppTheme.primary),
+                  style: TextStyle(
+                    color: AppTheme.primary,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
             ],
@@ -350,13 +353,16 @@ class ProfileView extends GetView<ProfileController> {
             height: 70,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: AppTheme.background,
-              border: Border.all(color: AppTheme.surface, width: 2),
+              color: AppTheme.primary.withValues(alpha: 0.1),
+              border: Border.all(
+                color: AppTheme.primary.withValues(alpha: 0.5),
+                width: 2,
+              ),
             ),
-            child: const Icon(Icons.add, color: AppTheme.textSecondary),
+            child: const Icon(Icons.add, color: AppTheme.primary),
           ),
           const SizedBox(height: 8),
-          const Text("Add", style: TextStyle(color: AppTheme.textSecondary)),
+          const Text("Add", style: TextStyle(color: AppTheme.primary)),
         ],
       ),
     );
