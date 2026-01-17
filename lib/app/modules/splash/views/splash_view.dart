@@ -28,9 +28,10 @@ class SplashView extends GetView<SplashController> {
                   ),
                 ],
               ),
-              child: const Icon(
-                Icons.church,
-                size: 80,
+              child: Image.asset(
+                'assets/splash/splash_logo.png',
+                width: 80,
+                height: 80,
                 color: AppTheme.primary,
               ),
             ),

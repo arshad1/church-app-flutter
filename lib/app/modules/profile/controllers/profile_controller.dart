@@ -63,6 +63,8 @@ class ProfileController extends GetxController {
   Future<void> updateProfile({
     required String name,
     required String phone,
+    String? email,
+    String? address,
     File? imageFile,
   }) async {
     final memberId = user.value?.member?.id;
@@ -78,6 +80,20 @@ class ProfileController extends GetxController {
 
     isLoading.value = true;
     try {
+      // 1. Update User Profile (Email) if changed
+      if (email != null && email.isNotEmpty && email != user.value?.email) {
+        await _userService.updateUserProfile({'email': email});
+      }
+
+      // 2. Update Family Details (Address) if changed
+      // Note: This updates the address for the whole family
+      if (address != null &&
+          address.isNotEmpty &&
+          address != user.value?.member?.family?.address) {
+        await _familyService.updateFamily({'address': address});
+      }
+
+      // 3. Update Member Details (Name, Phone, Image)
       String? imageUrl;
       if (imageFile != null) {
         imageUrl = await _uploadService.uploadImage(imageFile);
@@ -88,6 +104,7 @@ class ProfileController extends GetxController {
         'phone': phone,
         if (imageUrl != null) 'profileImage': imageUrl,
       });
+
       Get.back(); // Close edit screen
       Get.snackbar(
         'Success',

@@ -13,4 +13,13 @@ class UserService extends GetxService {
       rethrow;
     }
   }
+
+  Future<UserModel> updateUserProfile(Map<String, dynamic> data) async {
+    try {
+      final response = await _client.put('/mobile/profile', data: data);
+      return UserModel.fromJson(response.data);
+    } catch (e) {
+      rethrow;
+    }
+  }
 }

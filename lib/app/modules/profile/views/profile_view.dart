@@ -226,13 +226,15 @@ class ProfileView extends GetView<ProfileController> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildSectionHeader("Contact Information", onEdit: () {}),
+          _buildSectionHeader(
+            "Contact Information",
+            onEdit: () => Get.to(() => const EditProfileView()),
+          ),
           const SizedBox(height: 16),
           _buildInfoCard(
             icon: Icons.email,
             label: "EMAIL",
             value: email ?? "No email",
-            isLocked: true,
           ),
           const SizedBox(height: 12),
           _buildInfoCard(

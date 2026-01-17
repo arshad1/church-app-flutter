@@ -17,6 +17,8 @@ class _EditProfileViewState extends State<EditProfileView> {
   final _formKey = GlobalKey<FormState>();
   late TextEditingController _nameController;
   late TextEditingController _phoneController;
+  late TextEditingController _emailController;
+  late TextEditingController _addressController;
   final ProfileController _controller = Get.find<ProfileController>();
   File? _selectedImage;
   final ImagePicker _picker = ImagePicker();
@@ -27,6 +29,12 @@ class _EditProfileViewState extends State<EditProfileView> {
     final member = _controller.user.value?.member;
     _nameController = TextEditingController(text: member?.name ?? '');
     _phoneController = TextEditingController(text: member?.phone ?? '');
+    _emailController = TextEditingController(
+      text: _controller.user.value?.email ?? '',
+    );
+    _addressController = TextEditingController(
+      text: member?.family?.address ?? '',
+    );
   }
 
   Future<void> _pickImage() async {
@@ -45,6 +53,8 @@ class _EditProfileViewState extends State<EditProfileView> {
   void dispose() {
     _nameController.dispose();
     _phoneController.dispose();
+    _emailController.dispose();
+    _addressController.dispose();
     super.dispose();
   }
 
@@ -137,10 +147,26 @@ class _EditProfileViewState extends State<EditProfileView> {
               ),
               const SizedBox(height: 16),
               _buildTextField(
+                controller: _emailController,
+                label: 'Email Address',
+                icon: Icons.email,
+                keyboardType: TextInputType.emailAddress,
+                validator: (v) =>
+                    v == null || !GetUtils.isEmail(v) ? 'Invalid email' : null,
+              ),
+              const SizedBox(height: 16),
+              _buildTextField(
                 controller: _phoneController,
                 label: 'Phone Number',
                 icon: Icons.phone,
                 keyboardType: TextInputType.phone,
+              ),
+              const SizedBox(height: 16),
+              _buildTextField(
+                controller: _addressController,
+                label: 'Home Address',
+                icon: Icons.home,
+                maxLines: 3,
               ),
               const SizedBox(height: 32),
               Obx(
@@ -155,6 +181,8 @@ class _EditProfileViewState extends State<EditProfileView> {
                               _controller.updateProfile(
                                 name: _nameController.text,
                                 phone: _phoneController.text,
+                                email: _emailController.text,
+                                address: _addressController.text,
                                 imageFile: _selectedImage,
                               );
                             }
@@ -190,12 +218,14 @@ class _EditProfileViewState extends State<EditProfileView> {
     required String label,
     required IconData icon,
     TextInputType keyboardType = TextInputType.text,
+    int maxLines = 1,
     String? Function(String?)? validator,
   }) {
     return TextFormField(
       controller: controller,
       style: const TextStyle(color: Colors.white),
       keyboardType: keyboardType,
+      maxLines: maxLines,
       validator: validator,
       decoration: InputDecoration(
         labelText: label,
