@@ -1,50 +1,40 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../core/theme/app_theme.dart';
-import 'dart:io';
-import 'package:image_picker/image_picker.dart';
-import '../../../core/utils/image_helper.dart';
+import '../../../data/models/member_model.dart'; // Assuming Family structure is inside or related
 import '../controllers/profile_controller.dart';
 
-class EditProfileView extends StatefulWidget {
-  const EditProfileView({super.key});
+class EditFamilyView extends StatefulWidget {
+  const EditFamilyView({super.key});
 
   @override
-  State<EditProfileView> createState() => _EditProfileViewState();
+  State<EditFamilyView> createState() => _EditFamilyViewState();
 }
 
-class _EditProfileViewState extends State<EditProfileView> {
+class _EditFamilyViewState extends State<EditFamilyView> {
   final _formKey = GlobalKey<FormState>();
   late TextEditingController _nameController;
+  late TextEditingController _addressController;
   late TextEditingController _phoneController;
+  late TextEditingController _houseNameController;
   final ProfileController _controller = Get.find<ProfileController>();
-  File? _selectedImage;
-  final ImagePicker _picker = ImagePicker();
 
   @override
   void initState() {
     super.initState();
-    final member = _controller.user.value?.member;
-    _nameController = TextEditingController(text: member?.name ?? '');
-    _phoneController = TextEditingController(text: member?.phone ?? '');
-  }
-
-  Future<void> _pickImage() async {
-    final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
-    if (image != null) {
-      final processedImage = await ImageHelper.processImage(File(image.path));
-      if (processedImage != null) {
-        setState(() {
-          _selectedImage = processedImage;
-        });
-      }
-    }
+    final family = _controller.user.value?.member?.family;
+    _nameController = TextEditingController(text: family?.name ?? '');
+    _addressController = TextEditingController(text: family?.address ?? '');
+    _phoneController = TextEditingController(text: family?.phone ?? '');
+    _houseNameController = TextEditingController(text: family?.houseName ?? '');
   }
 
   @override
   void dispose() {
     _nameController.dispose();
+    _addressController.dispose();
     _phoneController.dispose();
+    _houseNameController.dispose();
     super.dispose();
   }
 
@@ -60,7 +50,7 @@ class _EditProfileViewState extends State<EditProfileView> {
           onPressed: () => Get.back(),
         ),
         title: const Text(
-          'Edit Profile',
+          'Edit Family Details',
           style: TextStyle(color: Colors.white),
         ),
         centerTitle: true,
@@ -71,76 +61,33 @@ class _EditProfileViewState extends State<EditProfileView> {
           key: _formKey,
           child: Column(
             children: [
-              GestureDetector(
-                onTap: _pickImage,
-                child: Stack(
-                  children: [
-                    Container(
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        border: Border.all(color: AppTheme.surface, width: 4),
-                      ),
-                      child: CircleAvatar(
-                        radius: 50,
-                        backgroundColor: AppTheme.surface,
-                        backgroundImage: _selectedImage != null
-                            ? FileImage(_selectedImage!)
-                            : (_controller.user.value?.member?.profileImage !=
-                                          null
-                                      ? NetworkImage(
-                                          _controller
-                                              .user
-                                              .value!
-                                              .member!
-                                              .profileImage!,
-                                        )
-                                      : null)
-                                  as ImageProvider?,
-                        child:
-                            _selectedImage == null &&
-                                _controller.user.value?.member?.profileImage ==
-                                    null
-                            ? const Icon(
-                                Icons.person,
-                                size: 50,
-                                color: Colors.grey,
-                              )
-                            : null,
-                      ),
-                    ),
-                    Positioned(
-                      right: 0,
-                      bottom: 0,
-                      child: Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: const BoxDecoration(
-                          color: AppTheme.primary,
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(
-                          Icons.camera_alt,
-                          color: Colors.white,
-                          size: 18,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 32),
               _buildTextField(
                 controller: _nameController,
-                label: 'Full Name',
-                icon: Icons.person,
-                validator: (v) =>
-                    v == null || v.isEmpty ? 'Name cannot be empty' : null,
+                label: 'Family Name',
+                icon: Icons.family_restroom,
+                validator: (v) => v == null || v.isEmpty
+                    ? 'Family Name cannot be empty'
+                    : null,
+              ),
+              const SizedBox(height: 16),
+              _buildTextField(
+                controller: _houseNameController,
+                label: 'House Name',
+                icon: Icons.home_filled,
               ),
               const SizedBox(height: 16),
               _buildTextField(
                 controller: _phoneController,
-                label: 'Phone Number',
+                label: 'Primary Phone',
                 icon: Icons.phone,
                 keyboardType: TextInputType.phone,
+              ),
+              const SizedBox(height: 16),
+              _buildTextField(
+                controller: _addressController,
+                label: 'Address',
+                icon: Icons.location_on,
+                maxLines: 3,
               ),
               const SizedBox(height: 32),
               Obx(
@@ -152,10 +99,11 @@ class _EditProfileViewState extends State<EditProfileView> {
                         ? null
                         : () {
                             if (_formKey.currentState!.validate()) {
-                              _controller.updateProfile(
+                              _controller.updateFamilyDetails(
                                 name: _nameController.text,
+                                houseName: _houseNameController.text,
                                 phone: _phoneController.text,
-                                imageFile: _selectedImage,
+                                address: _addressController.text,
                               );
                             }
                           },
@@ -189,12 +137,14 @@ class _EditProfileViewState extends State<EditProfileView> {
     required String label,
     required IconData icon,
     TextInputType keyboardType = TextInputType.text,
+    int maxLines = 1,
     String? Function(String?)? validator,
   }) {
     return TextFormField(
       controller: controller,
       style: const TextStyle(color: Colors.white),
       keyboardType: keyboardType,
+      maxLines: maxLines,
       validator: validator,
       decoration: InputDecoration(
         labelText: label,

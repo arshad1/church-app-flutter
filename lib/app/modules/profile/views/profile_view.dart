@@ -8,6 +8,7 @@ import '../controllers/profile_controller.dart';
 import 'add_family_member_view.dart';
 import 'edit_profile_view.dart';
 import 'edit_family_member_view.dart';
+import 'edit_family_view.dart';
 
 class ProfileView extends GetView<ProfileController> {
   const ProfileView({super.key});
@@ -235,11 +236,9 @@ class ProfileView extends GetView<ProfileController> {
                 ),
               ),
               TextButton(
-                onPressed: () {
-                  // Manage family
-                },
+                onPressed: () => Get.to(() => const EditFamilyView()),
                 child: const Text(
-                  "Manage",
+                  "Edit Family",
                   style: TextStyle(color: AppTheme.primary),
                 ),
               ),

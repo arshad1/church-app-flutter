@@ -41,4 +41,12 @@ class FamilyService extends GetxService {
       rethrow;
     }
   }
+
+  Future<void> updateFamily(Map<String, dynamic> data) async {
+    try {
+      await _client.put('/mobile/family', data: data);
+    } catch (e) {
+      rethrow;
+    }
+  }
 }

@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../data/models/member_model.dart';
+import '../../../core/utils/image_helper.dart';
 import '../controllers/profile_controller.dart';
 
 class EditFamilyMemberView extends StatefulWidget {
@@ -32,9 +33,12 @@ class _EditFamilyMemberViewState extends State<EditFamilyMemberView> {
   Future<void> _pickImage() async {
     final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
     if (image != null) {
-      setState(() {
-        _selectedImage = File(image.path);
-      });
+      final processedImage = await ImageHelper.processImage(File(image.path));
+      if (processedImage != null) {
+        setState(() {
+          _selectedImage = processedImage;
+        });
+      }
     }
   }
 
