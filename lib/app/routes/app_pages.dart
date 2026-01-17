@@ -16,13 +16,15 @@ import '../modules/media/bindings/media_binding.dart';
 import '../modules/media/views/media_view.dart';
 import '../modules/media/bindings/album_detail_binding.dart';
 import '../modules/media/views/album_detail_view.dart';
+import '../modules/splash/bindings/splash_binding.dart';
+import '../modules/splash/views/splash_view.dart';
 
 part 'app_routes.dart';
 
 class AppPages {
   AppPages._();
 
-  static const initial = Routes.welcome;
+  static const initial = Routes.splash;
 
   static final routes = [
     GetPage(
@@ -64,6 +66,11 @@ class AppPages {
       name: _Paths.albumDetail,
       page: () => const AlbumDetailView(),
       binding: AlbumDetailBinding(),
+    ),
+    GetPage(
+      name: _Paths.splash,
+      page: () => const SplashView(),
+      binding: SplashBinding(),
     ),
   ];
 }

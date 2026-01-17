@@ -11,6 +11,7 @@ abstract class Routes {
   static const events = _Paths.events;
   static const media = _Paths.media;
   static const albumDetail = _Paths.albumDetail;
+  static const splash = _Paths.splash;
 }
 
 abstract class _Paths {
@@ -23,4 +24,5 @@ abstract class _Paths {
   static const events = '/events';
   static const media = '/media';
   static const albumDetail = '/album-detail';
+  static const splash = '/splash';
 }

@@ -12,6 +12,7 @@ class MemberModel {
   String? gender;
   int? familyId;
   int? spouseId;
+  int? houseId;
   FamilyModel? family;
 
   MemberModel({
@@ -41,6 +42,7 @@ class MemberModel {
     gender = json['gender'];
     familyId = json['familyId'];
     spouseId = json['spouseId'];
+    houseId = json['houseId'];
     family = json['family'] != null
         ? FamilyModel.fromJson(json['family'])
         : null;
@@ -59,6 +61,7 @@ class MemberModel {
     data['gender'] = gender;
     data['familyId'] = familyId;
     data['spouseId'] = spouseId;
+    data['houseId'] = houseId;
     if (family != null) {
       data['family'] = family!.toJson();
     }

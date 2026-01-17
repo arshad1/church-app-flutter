@@ -22,7 +22,7 @@ void main() async {
   // }
 
   // Initialize Global Services
-  final authService = Get.put(AuthService(), permanent: true);
+  Get.put(AuthService(), permanent: true);
   // Get.put(NotificationService(), permanent: true);
   Get.put(ContentService(), permanent: true);
 
@@ -34,10 +34,8 @@ void main() async {
       builder: (context, child) {
         return GetMaterialApp(
           title: "Church App",
-          // Use AuthService to determine the initial route
-          initialRoute: authService.isAuthenticated
-              ? Routes.home
-              : Routes.welcome,
+          // Navigation logic is handled in SplashController
+          initialRoute: Routes.splash,
           getPages: AppPages.routes,
           theme: AppTheme.light,
           darkTheme: AppTheme.dark,
