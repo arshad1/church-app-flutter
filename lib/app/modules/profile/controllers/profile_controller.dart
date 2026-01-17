@@ -135,6 +135,7 @@ class ProfileController extends GetxController {
     required int memberId,
     required String name,
     required String phone,
+    int? spouseId,
     File? imageFile,
   }) async {
     isLoading.value = true;
@@ -147,6 +148,7 @@ class ProfileController extends GetxController {
       await _familyService.updateFamilyMember(memberId, {
         'name': name,
         'phone': phone,
+        if (spouseId != null) 'spouseId': spouseId,
         if (imageUrl != null) 'profileImage': imageUrl,
       });
       Get.back(); // Close edit screen

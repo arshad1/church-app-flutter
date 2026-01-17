@@ -11,6 +11,7 @@ class MemberModel {
   DateTime? dob;
   String? gender;
   int? familyId;
+  int? spouseId;
   FamilyModel? family;
 
   MemberModel({
@@ -24,6 +25,7 @@ class MemberModel {
     this.dob,
     this.gender,
     this.familyId,
+    this.spouseId,
     this.family,
   });
 
@@ -38,6 +40,7 @@ class MemberModel {
     dob = json['dob'] != null ? DateTime.tryParse(json['dob']) : null;
     gender = json['gender'];
     familyId = json['familyId'];
+    spouseId = json['spouseId'];
     family = json['family'] != null
         ? FamilyModel.fromJson(json['family'])
         : null;
@@ -55,6 +58,7 @@ class MemberModel {
     data['dob'] = dob?.toIso8601String();
     data['gender'] = gender;
     data['familyId'] = familyId;
+    data['spouseId'] = spouseId;
     if (family != null) {
       data['family'] = family!.toJson();
     }

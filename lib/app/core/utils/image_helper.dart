@@ -35,7 +35,7 @@ class ImageHelper {
 
   static Future<File?> compressImage(File imageFile) async {
     final filePath = imageFile.absolute.path;
-    final lastIndex = filePath.lastIndexOf(new RegExp(r'.jp'));
+    final lastIndex = filePath.lastIndexOf(RegExp(r'.jp'));
     final splitted = filePath.substring(0, (lastIndex));
     final outPath = "${splitted}_out${filePath.substring(lastIndex)}";
 

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../core/theme/app_theme.dart';
-import '../../../data/models/member_model.dart'; // Assuming Family structure is inside or related
 import '../controllers/profile_controller.dart';
 
 class EditFamilyView extends StatefulWidget {

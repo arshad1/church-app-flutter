@@ -21,6 +21,7 @@ class _EditFamilyMemberViewState extends State<EditFamilyMemberView> {
   late TextEditingController _phoneController;
   final ProfileController _controller = Get.find<ProfileController>();
   File? _selectedImage;
+  int? _selectedSpouseId;
   final ImagePicker _picker = ImagePicker();
 
   @override
@@ -28,6 +29,7 @@ class _EditFamilyMemberViewState extends State<EditFamilyMemberView> {
     super.initState();
     _nameController = TextEditingController(text: widget.member.name ?? '');
     _phoneController = TextEditingController(text: widget.member.phone ?? '');
+    _selectedSpouseId = widget.member.spouseId;
   }
 
   Future<void> _pickImage() async {
@@ -151,7 +153,32 @@ class _EditFamilyMemberViewState extends State<EditFamilyMemberView> {
                 icon: Icons.phone,
                 keyboardType: TextInputType.phone,
               ),
-              const SizedBox(height: 32),
+              const SizedBox(height: 16),
+              if (_controller.user.value?.member?.family?.members != null &&
+                  _controller
+                      .user
+                      .value!
+                      .member!
+                      .family!
+                      .members!
+                      .isNotEmpty) ...[
+                _buildDropdownField<int>(
+                  label: 'Spouse (Optional)',
+                  icon: Icons.favorite,
+                  value: _selectedSpouseId,
+                  items: _controller.user.value!.member!.family!.members!
+                      .where((m) => m.id != widget.member.id) // Exclude self
+                      .map(
+                        (m) => DropdownMenuItem(
+                          value: m.id,
+                          child: Text(m.name ?? 'Member ${m.id}'),
+                        ),
+                      )
+                      .toList(),
+                  onChanged: (v) => setState(() => _selectedSpouseId = v),
+                ),
+                const SizedBox(height: 32),
+              ],
               Obx(
                 () => SizedBox(
                   width: double.infinity,
@@ -167,6 +194,7 @@ class _EditFamilyMemberViewState extends State<EditFamilyMemberView> {
                                 memberId: widget.member.id!,
                                 name: _nameController.text,
                                 phone: _phoneController.text,
+                                spouseId: _selectedSpouseId,
                                 imageFile: _selectedImage,
                               );
                             }
@@ -227,6 +255,34 @@ class _EditFamilyMemberViewState extends State<EditFamilyMemberView> {
           borderSide: const BorderSide(color: AppTheme.primary),
         ),
       ),
+    );
+  }
+
+  Widget _buildDropdownField<T>({
+    required String label,
+    required IconData icon,
+    required T? value,
+    required List<DropdownMenuItem<T>> items,
+    required Function(T?) onChanged,
+  }) {
+    return DropdownButtonFormField<T>(
+      // ignore: deprecated_member_use
+      value: value,
+      dropdownColor: AppTheme.surface,
+      style: const TextStyle(color: Colors.white),
+      decoration: InputDecoration(
+        labelText: label,
+        labelStyle: const TextStyle(color: AppTheme.textSecondary),
+        prefixIcon: Icon(icon, color: AppTheme.textSecondary),
+        filled: true,
+        fillColor: AppTheme.surface,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide.none,
+        ),
+      ),
+      items: items,
+      onChanged: onChanged,
     );
   }
 }

@@ -18,6 +18,8 @@ class _AddFamilyMemberViewState extends State<AddFamilyMemberView> {
 
   DateTime? _selectedDate;
   String? _selectedGender;
+  int? _selectedHouseId;
+  int? _selectedSpouseId;
 
   @override
   Widget build(BuildContext context) {
@@ -70,7 +72,12 @@ class _AddFamilyMemberViewState extends State<AddFamilyMemberView> {
                 label: 'Gender',
                 icon: Icons.wc,
                 value: _selectedGender,
-                items: ['MALE', 'FEMALE', 'OTHER'],
+                items: ['MALE', 'FEMALE', 'OTHER']
+                    .map(
+                      (item) =>
+                          DropdownMenuItem(value: item, child: Text(item)),
+                    )
+                    .toList(),
                 onChanged: (v) => setState(() => _selectedGender = v),
               ),
               const SizedBox(height: 16),
@@ -113,6 +120,53 @@ class _AddFamilyMemberViewState extends State<AddFamilyMemberView> {
                 keyboardType: TextInputType.phone,
                 validator: (v) => null, // Optional
               ),
+              const SizedBox(height: 16),
+              // House Selection (only if multiple houses exist)
+              if (controller.user.value?.member?.family?.houses != null &&
+                  controller.user.value!.member!.family!.houses!.length >
+                      1) ...[
+                _buildDropdownField<int>(
+                  label: 'Select House',
+                  icon: Icons.home,
+                  value: _selectedHouseId,
+                  items: controller.user.value!.member!.family!.houses!
+                      .map(
+                        (h) => DropdownMenuItem(
+                          value: h.id,
+                          child: Text(h.name ?? 'House ${h.id}'),
+                        ),
+                      )
+                      .toList(),
+                  onChanged: (v) => setState(() => _selectedHouseId = v),
+                ),
+                const SizedBox(height: 16),
+              ],
+              // Spouse Selection
+              if (controller.user.value?.member?.family?.members != null &&
+                  controller
+                      .user
+                      .value!
+                      .member!
+                      .family!
+                      .members!
+                      .isNotEmpty) ...[
+                _buildDropdownField<int>(
+                  label: 'Spouse (Optional)',
+                  icon: Icons.favorite,
+                  value: _selectedSpouseId,
+                  items: controller.user.value!.member!.family!.members!
+                      .where((m) => m.id != null) // Filter valid members
+                      .map(
+                        (m) => DropdownMenuItem(
+                          value: m.id,
+                          child: Text(m.name ?? 'Member ${m.id}'),
+                        ),
+                      )
+                      .toList(),
+                  onChanged: (v) => setState(() => _selectedSpouseId = v),
+                ),
+                const SizedBox(height: 16),
+              ],
               const SizedBox(height: 32),
               Obx(
                 () => SizedBox(
@@ -139,6 +193,10 @@ class _AddFamilyMemberViewState extends State<AddFamilyMemberView> {
                                     ? _phoneController.text
                                     : null,
                                 'dob': _selectedDate?.toIso8601String(),
+                                if (_selectedHouseId != null)
+                                  'houseId': _selectedHouseId,
+                                if (_selectedSpouseId != null)
+                                  'spouseId': _selectedSpouseId,
                               };
                               controller.addFamilyMember(data);
                             }
@@ -204,22 +262,16 @@ class _AddFamilyMemberViewState extends State<AddFamilyMemberView> {
     );
   }
 
-  Widget _buildDropdownField({
+  Widget _buildDropdownField<T>({
     required String label,
     required IconData icon,
-    required String? value,
-    required List<String> items,
-    required Function(String?) onChanged,
+    required T? value,
+    required List<DropdownMenuItem<T>> items,
+    required Function(T?) onChanged,
   }) {
-    return DropdownButtonFormField<String>(
+    return DropdownButtonFormField<T>(
       // ignore: deprecated_member_use
-      value:
-          value, // Keep value as it's required for controlled input, ignore lint if needed but let's try to clear others first.
-      // If I change to initialValue, I lose control.
-      // But let's see if analysis complains about THIS specific line or if I can ignore it.
-      // Actually, I will wrap it in // ignore: deprecated_member_use if I can't fix it properly logic-wise.
-      // But let's try to fix it by checking if I can use a different widget.
-      // For now, I will leave it and see if I can fix the others.
+      value: value,
       dropdownColor: AppTheme.surface,
       style: const TextStyle(color: Colors.white),
       decoration: InputDecoration(
@@ -233,9 +285,7 @@ class _AddFamilyMemberViewState extends State<AddFamilyMemberView> {
           borderSide: BorderSide.none,
         ),
       ),
-      items: items
-          .map((item) => DropdownMenuItem(value: item, child: Text(item)))
-          .toList(),
+      items: items,
       onChanged: onChanged,
     );
   }

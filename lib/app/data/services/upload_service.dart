@@ -26,7 +26,7 @@ class UploadService extends GetxService {
       }
       return null;
     } catch (e) {
-      print('Error uploading image: $e');
+      // print('Error uploading image: $e');
       rethrow;
     }
   }

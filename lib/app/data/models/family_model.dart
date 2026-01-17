@@ -1,4 +1,5 @@
 import 'member_model.dart';
+import 'house_model.dart';
 
 class FamilyModel {
   int? id;
@@ -7,6 +8,7 @@ class FamilyModel {
   String? phone;
   String? houseName;
   List<MemberModel>? members;
+  List<HouseModel>? houses;
 
   FamilyModel({
     this.id,
@@ -15,6 +17,7 @@ class FamilyModel {
     this.phone,
     this.houseName,
     this.members,
+    this.houses,
   });
 
   FamilyModel.fromJson(Map<String, dynamic> json) {
@@ -29,6 +32,12 @@ class FamilyModel {
         members!.add(MemberModel.fromJson(v));
       });
     }
+    if (json['houses'] != null) {
+      houses = <HouseModel>[];
+      json['houses'].forEach((v) {
+        houses!.add(HouseModel.fromJson(v));
+      });
+    }
   }
 
   Map<String, dynamic> toJson() {
@@ -40,6 +49,9 @@ class FamilyModel {
     data['houseName'] = houseName;
     if (members != null) {
       data['members'] = members!.map((v) => v.toJson()).toList();
+    }
+    if (houses != null) {
+      data['houses'] = houses!.map((v) => v.toJson()).toList();
     }
     return data;
   }
