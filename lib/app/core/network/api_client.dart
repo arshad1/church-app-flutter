@@ -2,7 +2,6 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart' hide Response;
 import 'package:get_storage/get_storage.dart';
-import '../../data/services/auth_service.dart';
 import '../../routes/app_pages.dart';
 
 class ApiClient {
@@ -47,10 +46,10 @@ class ApiClient {
     // Clear local storage
     _storage.remove('token');
     _storage.remove('user');
-    
+
     // Redirect to login page instead of welcome
     Get.offAllNamed(Routes.login);
-    
+
     Get.snackbar(
       "Session Expired",
       "Please login again to continue",
