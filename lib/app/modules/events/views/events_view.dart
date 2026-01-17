@@ -1,3 +1,4 @@
+import 'package:church_app/app/core/widgets/bottom_nav_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
@@ -39,7 +40,7 @@ class EventsView extends GetView<EventsController> {
                 ),
               ),
             ),
-            _buildBottomNavBar(),
+            const AppBottomNavBar(currentRoute: Routes.events),
           ],
         ),
       ),
@@ -48,7 +49,7 @@ class EventsView extends GetView<EventsController> {
 
   Widget _buildHeader() {
     return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      mainAxisAlignment: MainAxisAlignment.start,
       children: [
         Text(
           'Events',
@@ -57,17 +58,6 @@ class EventsView extends GetView<EventsController> {
             fontSize: 24.sp,
             fontWeight: FontWeight.bold,
           ),
-        ),
-        Row(
-          children: [
-            Icon(
-              Icons.notifications_outlined,
-              color: Colors.white,
-              size: 24.sp,
-            ),
-            SizedBox(width: 16.w),
-            Icon(Icons.filter_list, color: Colors.white, size: 24.sp),
-          ],
         ),
       ],
     );
@@ -146,7 +136,7 @@ class EventsView extends GetView<EventsController> {
       final featuredEvent = controller.featuredEvent;
 
       if (featuredEvent == null) {
-        return SizedBox.shrink();
+        return const SizedBox.shrink();
       }
 
       final canLaunchStream = featuredEvent.isLive &&
@@ -274,7 +264,7 @@ class EventsView extends GetView<EventsController> {
   Widget _buildUpcomingEventsList() {
     return Obx(() {
       if (controller.isLoading.value) {
-        return Center(
+        return const Center(
           child: CircularProgressIndicator(),
         );
       }
@@ -493,62 +483,5 @@ class EventsView extends GetView<EventsController> {
         colorText: Colors.white,
       );
     }
-  }
-
-  Widget _buildBottomNavBar() {
-    return Container(
-      padding: EdgeInsets.symmetric(vertical: 16.h),
-      decoration: const BoxDecoration(
-        color: Colors.black,
-        border: Border(top: BorderSide(color: Color(0xFF1F2937))),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: [
-          _buildNavItem(
-            Icons.home,
-            'Home',
-            onTap: () => Get.offNamed(Routes.home),
-          ),
-          _buildNavItem(
-            Icons.play_circle_fill,
-            'Media',
-            onTap: () => Get.offNamed(Routes.media),
-          ),
-          _buildNavItem(Icons.calendar_today, 'Events', isActive: true),
-          _buildNavItem(Icons.menu, 'More'),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildNavItem(
-    IconData icon,
-    String label, {
-    bool isActive = false,
-    VoidCallback? onTap,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            icon,
-            color: isActive ? AppTheme.primary : AppTheme.textSecondary,
-            size: 24.sp,
-          ),
-          SizedBox(height: 4.h),
-          Text(
-            label,
-            style: TextStyle(
-              color: isActive ? AppTheme.primary : AppTheme.textSecondary,
-              fontSize: 10.sp,
-              fontWeight: isActive ? FontWeight.w600 : FontWeight.normal,
-            ),
-          ),
-        ],
-      ),
-    );
   }
 }

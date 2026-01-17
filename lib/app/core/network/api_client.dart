@@ -1,20 +1,17 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/material.dart';
+import 'package:get/get.dart' hide Response;
 import 'package:get_storage/get_storage.dart';
-import 'package:get/get_utils/src/platform/platform.dart';
+import '../../data/services/auth_service.dart';
+import '../../routes/app_pages.dart';
 
 class ApiClient {
   final Dio _dio = Dio();
   final GetStorage _storage = GetStorage();
 
   ApiClient() {
-    // START: Base URL configuration
-    // Use 10.0.2.2 for Android Emulator, localhost for iOS Simulator or Web
-    // Updated to localhost as requested, but keeping 10.0.2.2 logic for Android stability
-    String baseUrl = 'http://localhost:3000/api';
-
-    if (GetPlatform.isAndroid) {
-      baseUrl = 'http://10.0.2.2:3000/api';
-    }
+    // Updated base URL to use the specified local IP address
+    String baseUrl = 'http://192.168.0.187:3000/api';
 
     _dio.options.baseUrl = baseUrl;
     _dio.options.connectTimeout = const Duration(seconds: 10);
@@ -34,11 +31,32 @@ class ApiClient {
           return handler.next(options);
         },
         onError: (DioException e, handler) {
-          // Handle common errors here (e.g., logging, global snackbar)
-          // print("API Error: ${e.response?.statusCode} - ${e.message}");
+          if (e.response?.statusCode == 401) {
+            // Only redirect if we are NOT already on the login page
+            if (Get.currentRoute != Routes.login) {
+              _handleUnauthorized();
+            }
+          }
           return handler.next(e);
         },
       ),
+    );
+  }
+
+  void _handleUnauthorized() {
+    // Clear local storage
+    _storage.remove('token');
+    _storage.remove('user');
+    
+    // Redirect to login page instead of welcome
+    Get.offAllNamed(Routes.login);
+    
+    Get.snackbar(
+      "Session Expired",
+      "Please login again to continue",
+      snackPosition: SnackPosition.BOTTOM,
+      backgroundColor: Colors.red.withOpacity(0.8),
+      colorText: Colors.white,
     );
   }
 

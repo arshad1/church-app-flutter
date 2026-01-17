@@ -41,7 +41,7 @@ class MediaView extends GetView<MediaController> {
 
   Widget _buildHeader() {
     return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      mainAxisAlignment: MainAxisAlignment.start,
       children: [
         Text(
           'Media Gallery',
@@ -50,13 +50,6 @@ class MediaView extends GetView<MediaController> {
             fontSize: 24.sp,
             fontWeight: FontWeight.bold,
           ),
-        ),
-        Row(
-          children: [
-            Icon(Icons.search, color: Colors.white, size: 24.sp),
-            SizedBox(width: 16.w),
-            Icon(Icons.filter_list, color: Colors.white, size: 24.sp),
-          ],
         ),
       ],
     );
@@ -142,7 +135,7 @@ class MediaView extends GetView<MediaController> {
       final albums = controller.filteredAlbums;
 
       if (albums.isEmpty) {
-        return Center(
+        return const Center(
           child: Text("No albums found", style: TextStyle(color: Colors.white)),
         );
       }
@@ -185,7 +178,7 @@ class MediaView extends GetView<MediaController> {
                             ),
                             fit: BoxFit.cover,
                             onError: (e, s) =>
-                                AssetImage('assets/images/placeholder.png'),
+                                const AssetImage('assets/images/placeholder.png'),
                           ),
                         ),
                       ),
@@ -249,41 +242,28 @@ class MediaView extends GetView<MediaController> {
         color: Colors.black,
         border: Border(top: BorderSide(color: Color(0xFF1F2937))),
       ),
-      child: Stack(
-        clipBehavior: Clip.none,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              _buildNavItem(
-                Icons.home,
-                'Home',
-                onTap: () => Get.offNamed(Routes.home),
-              ),
-              _buildNavItem(
-                Icons.calendar_today,
-                'Events',
-                onTap: () => Get.offNamed(Routes.events),
-              ), // Swapped order to match mockup? No, mockup has Media 3rd actually.
-              // Wait, mockup standard nav is Home / Events / Media / Profile usually. The mockup image "Media Gallery" shows:
-              // Home / Events / Media / Profile.
-              // Media is selected.
-              _buildNavItem(Icons.play_circle_fill, 'Media', isActive: true),
-              _buildNavItem(
-                Icons.person,
-                'Profile',
-                onTap: () => Get.offNamed(Routes.profile),
-              ),
-            ],
+          _buildNavItem(
+            Icons.home_outlined,
+            'Home',
+            onTap: () => Get.offNamed(Routes.home),
           ),
-          Positioned(
-            right: 20.w,
-            top: -40.h,
-            child: FloatingActionButton(
-              onPressed: () {},
-              backgroundColor: AppTheme.primary,
-              child: Icon(Icons.camera_alt, color: Colors.white),
-            ),
+          _buildNavItem(
+            Icons.calendar_today_outlined,
+            'Events',
+            onTap: () => Get.offNamed(Routes.events),
+          ),
+          _buildNavItem(
+            Icons.play_circle_outline,
+            'Media',
+            isActive: true,
+          ),
+          _buildNavItem(
+            Icons.person_outline,
+            'Profile',
+            onTap: () => Get.offNamed(Routes.profile),
           ),
         ],
       ),

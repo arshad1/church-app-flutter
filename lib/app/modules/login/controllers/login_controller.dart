@@ -9,11 +9,18 @@ class LoginController extends GetxController {
   final AuthService _authService = Get.find<AuthService>();
   final GetStorage _storage = GetStorage();
 
-  final emailController = TextEditingController();
-  final passwordController = TextEditingController();
+  late TextEditingController emailController;
+  late TextEditingController passwordController;
 
   final isPasswordVisible = false.obs;
   final isLoading = false.obs;
+
+  @override
+  void onInit() {
+    super.onInit();
+    emailController = TextEditingController();
+    passwordController = TextEditingController();
+  }
 
   @override
   void onClose() {
@@ -63,23 +70,7 @@ class LoginController extends GetxController {
       await _storage.write('token', token);
       await _storage.write('user', user);
 
-      // Register Token (Fire & Forget)
-      // Register Token (Fire & Forget)
-      // try {
-      //   final notificationService = Get.find<NotificationService>();
-      //   final fcmToken = await notificationService.getFcmToken();
-      //
-      //   if (fcmToken != null) {
-      //     _authService.registerToken(
-      //       fcmToken,
-      //       GetPlatform.isAndroid ? "android" : "ios",
-      //     );
-      //   }
-      // } catch (e) {
-      //   debugPrint("Failed to register FCM token: \$e");
-      // }
-
-      // Navigate to Landing Page instead of Home
+      // Navigate to Landing Page
       Get.offAllNamed(Routes.landing);
     } catch (e) {
       String message = "Login failed";

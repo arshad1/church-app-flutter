@@ -1,4 +1,5 @@
 import 'package:church_app/app/core/theme/app_theme.dart';
+import 'package:church_app/app/core/widgets/bottom_nav_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -42,7 +43,7 @@ class HomeView extends GetView<HomeController> {
                 ),
               ),
             ),
-            _buildBottomNavBar(),
+            const AppBottomNavBar(currentRoute: Routes.home),
           ],
         ),
       ),
@@ -614,63 +615,6 @@ class HomeView extends GetView<HomeController> {
         }).toList(),
       );
     });
-  }
-
-  Widget _buildBottomNavBar() {
-    return Container(
-      padding: EdgeInsets.symmetric(vertical: 16.h),
-      decoration: const BoxDecoration(
-        color: Colors.black, // Or AppTheme.background which is almost black
-        border: Border(top: BorderSide(color: Color(0xFF1F2937))),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: [
-          _buildNavItem(Icons.home, 'Home', isActive: true),
-          _buildNavItem(
-            Icons.play_circle_fill,
-            'Media',
-            onTap: () => Get.toNamed(Routes.media),
-          ),
-          _buildNavItem(
-            Icons.calendar_today,
-            'Events',
-            onTap: () => Get.toNamed(Routes.events),
-          ),
-          _buildNavItem(Icons.menu, 'More'),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildNavItem(
-    IconData icon,
-    String label, {
-    bool isActive = false,
-    VoidCallback? onTap,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            icon,
-            color: isActive ? AppTheme.primary : AppTheme.textSecondary,
-            size: 24.sp,
-          ),
-          SizedBox(height: 4.h),
-          Text(
-            label,
-            style: TextStyle(
-              color: isActive ? AppTheme.primary : AppTheme.textSecondary,
-              fontSize: 10.sp,
-              fontWeight: isActive ? FontWeight.w600 : FontWeight.normal,
-            ),
-          ),
-        ],
-      ),
-    );
   }
 
   String _formatDate(String dateStr) {

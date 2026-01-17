@@ -1,3 +1,5 @@
+import 'package:church_app/app/core/widgets/bottom_nav_bar.dart';
+import 'package:church_app/app/routes/app_pages.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
@@ -17,19 +19,29 @@ class ProfileView extends GetView<ProfileController> {
         body: SafeArea(
           child: Column(
             children: [
-              SizedBox(height: 20.h),
-              _buildProfileHeader(),
-              SizedBox(height: 24.h),
-              _buildTabBar(),
               Expanded(
-                child: TabBarView(
-                  children: [
-                    _buildPersonalTab(),
-                    _buildPlaceholderTab('Family'),
-                    _buildPlaceholderTab('History'),
-                  ],
+                child: SingleChildScrollView(
+                  child: Column(
+                    children: [
+                      SizedBox(height: 20.h),
+                      _buildProfileHeader(),
+                      SizedBox(height: 24.h),
+                      _buildTabBar(),
+                      SizedBox(
+                        height: 600.h, // Fixed height for TabBarView in a ScrollView or use nested scroll
+                        child: TabBarView(
+                          children: [
+                            _buildPersonalTab(),
+                            _buildPlaceholderTab('Family'),
+                            _buildPlaceholderTab('History'),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
+              const AppBottomNavBar(currentRoute: Routes.profile),
             ],
           ),
         ),
@@ -90,20 +102,6 @@ class ProfileView extends GetView<ProfileController> {
                 child: Icon(Icons.edit, color: Colors.white, size: 14.sp),
               ),
             ),
-            Positioned(
-              bottom: 0,
-              left: 0,
-              child: Container(
-                padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 2.h),
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(
-                    alpha: 0.1,
-                  ), // Translucent backdrop for styling logic
-                  borderRadius: BorderRadius.circular(10.r),
-                ),
-                // Could be another badge logic
-              ),
-            ),
           ],
         ),
         SizedBox(height: 16.h),
@@ -111,7 +109,7 @@ class ProfileView extends GetView<ProfileController> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Text(
-              'Sarah Smith', // Matching avatar gender
+              'Sarah Smith',
               style: TextStyle(
                 color: Colors.white,
                 fontSize: 22.sp,
@@ -255,11 +253,11 @@ class ProfileView extends GetView<ProfileController> {
             AppTheme.primary,
           ),
           _buildJourneyCard(
-            Icons.volunteer_activism, // Dove icon replacement
+            Icons.volunteer_activism,
             'Confirmation',
             'May 20, 2010 • St. Mary\'s Church',
-            Color(0xFFF97316).withValues(alpha: 0.2),
-            Color(0xFFF97316),
+            const Color(0xFFF97316).withValues(alpha: 0.2),
+            const Color(0xFFF97316),
           ),
           _buildJourneyCard(
             Icons.favorite,
@@ -269,21 +267,6 @@ class ProfileView extends GetView<ProfileController> {
             Colors.pink,
             isLast: true,
           ),
-          SizedBox(height: 24.h),
-          Center(
-            child: TextButton(
-              onPressed: () {},
-              child: Text(
-                'View Full History',
-                style: TextStyle(
-                  color: AppTheme.textSecondary,
-                  fontSize: 14.sp,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
-          ),
-          SizedBox(height: 40.h), // Bottom padding for FAB
         ],
       ),
     );
@@ -347,9 +330,9 @@ class ProfileView extends GetView<ProfileController> {
   Widget _buildFamilyList() {
     return Row(
       children: [
-        _buildFamilyMember('Jane', 'images/family_jane.png'), // Generated
+        _buildFamilyMember('Jane', 'assets/images/family_jane.png'),
         SizedBox(width: 16.w),
-        _buildFamilyMember('Timmy', 'images/family_timmy.png'), // Generated
+        _buildFamilyMember('Timmy', 'assets/images/family_timmy.png'),
         SizedBox(width: 16.w),
         Column(
           children: [
@@ -406,21 +389,14 @@ class ProfileView extends GetView<ProfileController> {
     bool isLast = false,
   }) {
     return Container(
-      margin: EdgeInsets.only(
-        bottom: isLast ? 0 : 4.h,
-      ), // Reduced margin for linked look? Design has them separated but contained
-      // Actually design shows them as a list in a container... wait, the screenshot shows separate containers for each item
-      // but they look visually grouped. I'll stick to separate containers for cleaner code.
       padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
       decoration: BoxDecoration(
         color: AppTheme.surface,
         border: Border(
           bottom: isLast
               ? BorderSide.none
-              : BorderSide(color: Color(0xFF374151), width: 1), // Divider
+              : const BorderSide(color: Color(0xFF374151), width: 1),
         ),
-        // Group rounded corners?
-        // Let's just make them look like list tiles.
       ),
       child: Row(
         children: [
