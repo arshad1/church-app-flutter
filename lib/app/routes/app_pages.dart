@@ -10,6 +10,7 @@ import '../modules/welcome/bindings/welcome_binding.dart';
 import '../modules/welcome/views/welcome_view.dart';
 import '../modules/profile/bindings/profile_binding.dart';
 import '../modules/profile/views/profile_view.dart';
+import '../modules/profile/views/about_us_view.dart';
 import '../modules/events/bindings/events_binding.dart';
 import '../modules/events/views/events_view.dart';
 import '../modules/media/bindings/media_binding.dart';
@@ -71,6 +72,12 @@ class AppPages {
       name: _Paths.splash,
       page: () => const SplashView(),
       binding: SplashBinding(),
+    ),
+    GetPage(
+      name: _Paths.aboutUs,
+      page: () => const AboutUsView(),
+      binding:
+          ProfileBinding(), // Reusing ProfileBinding as it uses ProfileController
     ),
   ];
 }

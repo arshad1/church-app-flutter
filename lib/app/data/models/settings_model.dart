@@ -7,6 +7,12 @@ class SettingsModel {
   String? website;
   String? logoUrl;
   String? description;
+  String? vicar;
+  String? trustee;
+  String? secretary;
+  String? locationMapUrl;
+  double? latitude;
+  double? longitude;
 
   SettingsModel({
     this.id,
@@ -17,6 +23,10 @@ class SettingsModel {
     this.website,
     this.logoUrl,
     this.description,
+    this.vicar,
+    this.trustee,
+    this.secretary,
+    this.locationMapUrl,
   });
 
   SettingsModel.fromJson(Map<String, dynamic> json) {
@@ -28,6 +38,16 @@ class SettingsModel {
     website = json['website'];
     logoUrl = json['logoUrl'];
     description = json['description'];
+    vicar = json['vicar'];
+    trustee = json['trustee'];
+    secretary = json['secretary'];
+    locationMapUrl = json['locationMapUrl'];
+    latitude = json['latitude'] != null
+        ? (json['latitude'] as num).toDouble()
+        : null;
+    longitude = json['longitude'] != null
+        ? (json['longitude'] as num).toDouble()
+        : null;
   }
 
   Map<String, dynamic> toJson() {
@@ -40,6 +60,12 @@ class SettingsModel {
     data['website'] = website;
     data['logoUrl'] = logoUrl;
     data['description'] = description;
+    data['vicar'] = vicar;
+    data['trustee'] = trustee;
+    data['secretary'] = secretary;
+    data['locationMapUrl'] = locationMapUrl;
+    data['latitude'] = latitude;
+    data['longitude'] = longitude;
     return data;
   }
 }

@@ -2,6 +2,7 @@ import 'package:church_app/app/core/theme/app_theme.dart';
 import 'package:church_app/app/core/widgets/bottom_nav_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:church_app/app/routes/app_pages.dart';
 import 'package:intl/intl.dart';
@@ -31,13 +32,21 @@ class HomeView extends GetView<HomeController> {
                     SizedBox(height: 24.h),
                     _buildQuickActions(),
                     SizedBox(height: 32.h),
-                    _buildSectionHeader('Daily Devotions', onSeeAll: () {}),
-                    SizedBox(height: 16.h),
-                    _buildDevotionsList(),
-                    SizedBox(height: 32.h),
                     _buildNoticeBanner(),
                     SizedBox(height: 32.h),
-                    _buildSectionHeader('Upcoming Events'),
+                    _buildFeaturedEvent(),
+                    SizedBox(height: 32.h),
+                    _buildSectionHeader(
+                      'Gallery',
+                      onSeeAll: () => Get.toNamed(Routes.media),
+                    ),
+                    SizedBox(height: 16.h),
+                    _buildGalleryPreview(),
+                    SizedBox(height: 32.h),
+                    _buildSectionHeader(
+                      'Upcoming Events',
+                      onSeeAll: () => Get.toNamed(Routes.events),
+                    ),
                     SizedBox(height: 16.h),
                     _buildEventsList(),
                   ],
@@ -236,43 +245,161 @@ class HomeView extends GetView<HomeController> {
 
   Widget _buildQuickActions() {
     final actions = [
-      {'icon': Icons.volunteer_activism, 'label': 'Giving'},
-      {'icon': Icons.spa, 'label': 'Prayer'},
-      {'icon': Icons.ondemand_video, 'label': 'Live'},
-      {'icon': Icons.place, 'label': 'Check-in'},
+      {
+        'icon': Icons.volunteer_activism,
+        'label': 'Giving',
+        'onTap': () {
+          // TODO: Implement Giving
+        },
+      },
+      {
+        'icon': Icons.spa,
+        'label': 'Prayer',
+        'onTap': () {
+          // TODO: Implement Prayer Request
+        },
+      },
+      {
+        'icon': Icons.ondemand_video,
+        'label': 'Live',
+        'onTap': () {
+          // Find live event
+          final liveEvent = controller.upcomingEvents.firstWhereOrNull(
+            (e) => e.isLive && e.liveUrl != null,
+          );
+          if (liveEvent != null) {
+            _launchURL(liveEvent.liveUrl!);
+          } else {
+            // Or just open Events tab if no live event found
+            Get.toNamed(Routes.events);
+            // Optional: Show snackbar
+            /* Get.snackbar('No Live Event', 'There are no live events streaming right now.',
+                backgroundColor: Colors.orange, colorText: Colors.white, snackPosition: SnackPosition.BOTTOM); */
+          }
+        },
+      },
+      {
+        'icon': Icons.place,
+        'label': 'Check-in',
+        'onTap': () {
+          // TODO: Implement Check-in
+        },
+      },
     ];
 
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: actions.map((action) {
-        return Column(
-          children: [
-            Container(
-              width: 60.w,
-              height: 60.w,
-              decoration: BoxDecoration(
-                color: AppTheme.surface,
-                borderRadius: BorderRadius.circular(16.r),
+        return GestureDetector(
+          onTap: action['onTap'] as VoidCallback?,
+          child: Column(
+            children: [
+              Container(
+                width: 60.w,
+                height: 60.w,
+                decoration: BoxDecoration(
+                  color: AppTheme.surface,
+                  borderRadius: BorderRadius.circular(16.r),
+                ),
+                child: Icon(
+                  action['icon'] as IconData,
+                  color: Colors.white.withValues(alpha: 0.9),
+                  size: 28.sp,
+                ),
               ),
-              child: Icon(
-                action['icon'] as IconData,
-                color: Colors.white.withValues(alpha: 0.9),
-                size: 28.sp,
+              SizedBox(height: 8.h),
+              Text(
+                action['label'] as String,
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 12.sp,
+                  fontWeight: FontWeight.w500,
+                ),
               ),
-            ),
-            SizedBox(height: 8.h),
-            Text(
-              action['label'] as String,
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 12.sp,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ],
+            ],
+          ),
         );
       }).toList(),
     );
+  }
+
+  Widget _buildGalleryPreview() {
+    return Obx(() {
+      if (controller.galleryAlbums.isEmpty) {
+        return Center(
+          child: Text(
+            'No photos available',
+            style: TextStyle(color: AppTheme.textSecondary),
+          ),
+        );
+      }
+
+      return Row(
+        children: controller.galleryAlbums.map((album) {
+          return Expanded(
+            child: GestureDetector(
+              onTap: () => Get.toNamed(
+                Routes.albumDetail,
+                arguments: {'id': album.id, 'title': album.title},
+              ),
+              child: Container(
+                height: 120.h,
+                margin: EdgeInsets.only(right: 12.w),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(16.r),
+                  image: DecorationImage(
+                    image: NetworkImage(
+                      album.coverImage ?? 'https://via.placeholder.com/300',
+                    ),
+                    fit: BoxFit.cover,
+                    onError: (e, s) =>
+                        const AssetImage('assets/images/placeholder.png'),
+                  ),
+                ),
+                child: Container(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(16.r),
+                    gradient: LinearGradient(
+                      begin: Alignment.bottomCenter,
+                      end: Alignment.topCenter,
+                      colors: [
+                        Colors.black.withValues(alpha: 0.7),
+                        Colors.transparent,
+                      ],
+                    ),
+                  ),
+                  padding: EdgeInsets.all(8.w),
+                  alignment: Alignment.bottomLeft,
+                  child: Text(
+                    album.title,
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 12.sp,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ),
+            ),
+          );
+        }).toList(),
+      );
+    });
+  }
+
+  Future<void> _launchURL(String url) async {
+    try {
+      final uri = Uri.parse(url);
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+      } else {
+        Get.snackbar('Error', 'Could not launch $url');
+      }
+    } catch (e) {
+      Get.snackbar('Error', 'Failed to launch URL: $e');
+    }
   }
 
   Widget _buildSectionHeader(String title, {VoidCallback? onSeeAll}) {
@@ -303,125 +430,144 @@ class HomeView extends GetView<HomeController> {
     );
   }
 
-  Widget _buildDevotionsList() {
-    return SizedBox(
-      height: 160.h,
-      child: ListView(
-        scrollDirection: Axis.horizontal,
-        children: [
-          _buildDevotionCard(
-            'Finding Peace in Chaos',
-            '5 min read',
-            'assets/images/devotion1.png',
-            isToday: true,
-          ),
-          SizedBox(width: 16.w),
-          _buildDevotionCard(
-            'Walking in Faith',
-            'Yesterday',
-            'assets/images/devotion2.png',
-          ),
-        ],
-      ),
-    );
-  }
+  Widget _buildFeaturedEvent() {
+    return Obx(() {
+      final event = controller.featuredEvent;
+      if (event == null) return const SizedBox.shrink();
 
-  Widget _buildDevotionCard(
-    String title,
-    String subtitle,
-    String imagePath, {
-    bool isToday = false,
-  }) {
-    return Container(
-      width: 240.w,
-      decoration: BoxDecoration(
-        color: AppTheme.surface.withValues(
-          alpha: 0.5,
-        ), // Transparent to show background if needed
-        borderRadius: BorderRadius.circular(16.r),
-      ),
-      child: Column(
+      final canLaunchStream =
+          event.isLive && event.liveUrl != null && event.liveUrl!.isNotEmpty;
+
+      return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Expanded(
-            child: Stack(
-              children: [
-                Container(
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.vertical(
-                      top: Radius.circular(16.r),
-                    ),
-                    image: DecorationImage(
-                      image: AssetImage(imagePath),
-                      fit: BoxFit.cover,
-                    ),
+          _buildSectionHeader('Featured Event'),
+          SizedBox(height: 16.h),
+          GestureDetector(
+            onTap: canLaunchStream
+                ? () => _launchURL(event.liveUrl!)
+                : () => Get.toNamed(Routes.events),
+            child: Container(
+              width: double.infinity,
+              height: 200.h,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(24.r),
+                color: AppTheme.surface,
+              ),
+              child: Container(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(24.r),
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Colors.black.withValues(alpha: 0.1),
+                      Colors.black.withValues(alpha: 0.7),
+                    ],
                   ),
                 ),
-                if (isToday)
-                  Positioned(
-                    top: 12.h,
-                    left: 12.w,
-                    child: Container(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: 8.w,
-                        vertical: 4.h,
-                      ),
-                      decoration: BoxDecoration(
-                        color: AppTheme.primary,
-                        borderRadius: BorderRadius.circular(8.r),
-                      ),
-                      child: Text(
-                        'TODAY',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 10.sp,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ),
-              ],
-            ),
-          ),
-          Padding(
-            padding: EdgeInsets.all(12.w),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 14.sp,
-                    fontWeight: FontWeight.w600,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                SizedBox(height: 4.h),
-                Row(
+                padding: EdgeInsets.all(20.w),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Icon(
-                      Icons.access_time,
-                      color: AppTheme.textSecondary,
-                      size: 14.sp,
+                    Row(
+                      children: [
+                        Container(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 12.w,
+                            vertical: 6.h,
+                          ),
+                          decoration: BoxDecoration(
+                            color: event.isLive ? Colors.red : AppTheme.primary,
+                            borderRadius: BorderRadius.circular(8.r),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              if (event.isLive) ...[
+                                Icon(
+                                  Icons.circle,
+                                  color: Colors.white,
+                                  size: 8.sp,
+                                ),
+                                SizedBox(width: 4.w),
+                              ],
+                              Text(
+                                event.isLive ? 'LIVE NOW' : 'UPCOMING',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 10.sp,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        if (canLaunchStream) ...[
+                          SizedBox(width: 8.w),
+                          Container(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: 8.w,
+                              vertical: 4.h,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.2),
+                              borderRadius: BorderRadius.circular(6.r),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.play_circle_outline,
+                                  color: Colors.white,
+                                  size: 12.sp,
+                                ),
+                                SizedBox(width: 4.w),
+                                Text(
+                                  'Watch',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 10.sp,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ],
                     ),
-                    SizedBox(width: 4.w),
+                    const Spacer(),
                     Text(
-                      subtitle,
+                      event.title,
                       style: TextStyle(
-                        color: AppTheme.textSecondary,
-                        fontSize: 12.sp,
+                        color: Colors.white,
+                        fontSize: 20.sp,
+                        fontWeight: FontWeight.bold,
                       ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                     ),
+                    SizedBox(height: 8.h),
+                    if (event.description != null &&
+                        event.description!.isNotEmpty)
+                      Text(
+                        event.description!,
+                        style: TextStyle(
+                          color: Colors.white.withValues(alpha: 0.9),
+                          fontSize: 12.sp,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                   ],
                 ),
-              ],
+              ),
             ),
           ),
         ],
-      ),
-    );
+      );
+    });
   }
 
   Widget _buildNoticeBanner() {
@@ -429,8 +575,7 @@ class HomeView extends GetView<HomeController> {
       if (controller.announcements.isEmpty) {
         return const SizedBox.shrink(); // Hide if no announcements
       }
-
-      // Show the latest announcement
+      // ... content
       final announcement = controller.announcements.first;
 
       return Container(
@@ -478,25 +623,7 @@ class HomeView extends GetView<HomeController> {
                 ],
               ),
             ),
-            SizedBox(width: 12.w),
-            ElevatedButton(
-              onPressed: () {
-                // TODO: Show full announcement details
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.white,
-                foregroundColor: const Color(0xFFEF4444),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8.r),
-                ),
-                padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
-                minimumSize: Size.zero,
-              ),
-              child: Text(
-                'View',
-                style: TextStyle(fontSize: 12.sp, fontWeight: FontWeight.bold),
-              ),
-            ),
+            // ...
           ],
         ),
       );
@@ -520,107 +647,197 @@ class HomeView extends GetView<HomeController> {
 
       return Column(
         children: controller.upcomingEvents.map((event) {
-          // Parse date
-          DateTime? date;
-          try {
-            date = DateTime.parse(event.startDate);
-          } catch (_) {}
+          final dateTime = DateTime.parse(event.startDate);
+          final month = _getMonthAbbreviation(dateTime.month);
+          final day = dateTime.day.toString();
+          final canLaunchStream =
+              event.isLive &&
+              event.liveUrl != null &&
+              event.liveUrl!.isNotEmpty;
 
-          final month = date != null
-              ? [
-                  "JAN",
-                  "FEB",
-                  "MAR",
-                  "APR",
-                  "MAY",
-                  "JUN",
-                  "JUL",
-                  "AUG",
-                  "SEP",
-                  "OCT",
-                  "NOV",
-                  "DEC",
-                ][date.month - 1]
-              : "";
-          final day = date != null ? date.day.toString() : "";
-          final time = date != null
-              ? "${date.hour}:${date.minute.toString().padLeft(2, '0')}"
-              : ""; // Simple formatting
-
-          return Container(
-            margin: EdgeInsets.only(bottom: 16.h),
-            padding: EdgeInsets.all(16.w),
-            decoration: BoxDecoration(
-              color: AppTheme.surface,
-              borderRadius: BorderRadius.circular(16.r),
-            ),
-            child: Row(
-              children: [
-                Container(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: 12.w,
-                    vertical: 8.h,
-                  ),
-                  decoration: BoxDecoration(
-                    color: AppTheme.background,
-                    borderRadius: BorderRadius.circular(12.r),
-                  ),
-                  child: Column(
-                    children: [
-                      Text(
-                        month,
-                        style: TextStyle(
-                          color: AppTheme.textSecondary,
-                          fontSize: 10.sp,
-                          fontWeight: FontWeight.bold,
+          return GestureDetector(
+            onTap: canLaunchStream ? () => _launchURL(event.liveUrl!) : null,
+            child: Container(
+              margin: EdgeInsets.only(bottom: 16.h),
+              padding: EdgeInsets.all(16.w),
+              decoration: BoxDecoration(
+                color: AppTheme.surface,
+                borderRadius: BorderRadius.circular(16.r),
+                border: event.isLive
+                    ? Border.all(
+                        color: Colors.red.withValues(alpha: 0.5),
+                        width: 2,
+                      )
+                    : null,
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    width: 50.w,
+                    padding: EdgeInsets.symmetric(vertical: 8.h),
+                    decoration: BoxDecoration(
+                      color: event.isLive
+                          ? Colors.red.withValues(alpha: 0.2)
+                          : AppTheme.background,
+                      borderRadius: BorderRadius.circular(12.r),
+                    ),
+                    child: Column(
+                      children: [
+                        Text(
+                          month,
+                          style: TextStyle(
+                            color: event.isLive ? Colors.red : AppTheme.primary,
+                            fontSize: 10.sp,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
-                      ),
-                      Text(
-                        day,
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 18.sp,
-                          fontWeight: FontWeight.bold,
+                        SizedBox(height: 2.h),
+                        Text(
+                          day,
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 18.sp,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
-                SizedBox(width: 16.w),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        event.title,
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 16.sp,
-                          fontWeight: FontWeight.bold,
+                  SizedBox(width: 16.w),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                event.title,
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 16.sp,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            if (event.isLive) ...[
+                              SizedBox(width: 8.w),
+                              Container(
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: 6.w,
+                                  vertical: 2.h,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: Colors.red,
+                                  borderRadius: BorderRadius.circular(4.r),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      Icons.circle,
+                                      color: Colors.white,
+                                      size: 6.sp,
+                                    ),
+                                    SizedBox(width: 3.w),
+                                    Text(
+                                      'LIVE',
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 9.sp,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ],
                         ),
-                      ),
-                      SizedBox(height: 4.h),
-                      Text(
-                        '$time • ${event.location ?? "TBA"}',
-                        style: TextStyle(
-                          color: AppTheme.textSecondary,
-                          fontSize: 12.sp,
+                        SizedBox(height: 4.h),
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.access_time,
+                              color: AppTheme.textSecondary,
+                              size: 14.sp,
+                            ),
+                            SizedBox(width: 4.w),
+                            Text(
+                              _formatTime(dateTime),
+                              style: TextStyle(
+                                color: AppTheme.textSecondary,
+                                fontSize: 12.sp,
+                              ),
+                            ),
+                            if (event.location != null) ...[
+                              SizedBox(width: 12.w),
+                              Icon(
+                                Icons.place,
+                                color: AppTheme.textSecondary,
+                                size: 14.sp,
+                              ),
+                              SizedBox(width: 4.w),
+                              Expanded(
+                                child: Text(
+                                  event.location!,
+                                  style: TextStyle(
+                                    color: AppTheme.textSecondary,
+                                    fontSize: 12.sp,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
+                          ],
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
-                Icon(
-                  Icons.chevron_right,
-                  color: AppTheme.textSecondary,
-                  size: 20.sp,
-                ),
-              ],
+                  Icon(
+                    canLaunchStream
+                        ? Icons.play_circle_fill
+                        : Icons.chevron_right,
+                    color: canLaunchStream
+                        ? Colors.red
+                        : AppTheme.textSecondary,
+                    size: 24.sp,
+                  ),
+                ],
+              ),
             ),
           );
         }).toList(),
       );
     });
+  }
+
+  String _getMonthAbbreviation(int month) {
+    const months = [
+      'JAN',
+      'FEB',
+      'MAR',
+      'APR',
+      'MAY',
+      'JUN',
+      'JUL',
+      'AUG',
+      'SEP',
+      'OCT',
+      'NOV',
+      'DEC',
+    ];
+    return months[month - 1];
+  }
+
+  String _formatTime(DateTime dateTime) {
+    final hour = dateTime.hour;
+    final minute = dateTime.minute.toString().padLeft(2, '0');
+    final period = hour >= 12 ? 'PM' : 'AM';
+    final displayHour = hour > 12 ? hour - 12 : (hour == 0 ? 12 : hour);
+    return '$displayHour:$minute $period';
   }
 
   String _formatDate(String dateStr) {

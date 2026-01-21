@@ -7,10 +7,7 @@ import '../theme/app_theme.dart';
 class AppBottomNavBar extends StatelessWidget {
   final String currentRoute;
 
-  const AppBottomNavBar({
-    super.key,
-    required this.currentRoute,
-  });
+  const AppBottomNavBar({super.key, required this.currentRoute});
 
   @override
   Widget build(BuildContext context) {
@@ -40,6 +37,12 @@ class AppBottomNavBar extends StatelessWidget {
             label: 'Media',
             route: Routes.media,
             isActive: currentRoute == Routes.media,
+          ),
+          _buildNavItem(
+            icon: Icons.info_outline,
+            label: 'Contact',
+            route: Routes.aboutUs,
+            isActive: currentRoute == Routes.aboutUs,
           ),
           _buildNavItem(
             icon: Icons.person_outline,

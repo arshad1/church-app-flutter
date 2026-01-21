@@ -2,22 +2,30 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../data/models/user_model.dart';
 import '../../../data/services/user_service.dart';
+import '../../../data/services/auth_service.dart';
 import 'dart:io';
 import '../../../data/services/family_service.dart';
 import '../../../data/services/upload_service.dart';
+import '../../../data/services/settings_service.dart';
+import '../../../data/models/settings_model.dart';
 
 class ProfileController extends GetxController {
   final UserService _userService = Get.put(UserService());
   final FamilyService _familyService = Get.put(FamilyService());
   final UploadService _uploadService = Get.put(UploadService());
+  final SettingsService _settingsService = Get.put(SettingsService());
+  final AuthService _authService = Get.find<AuthService>();
 
   final Rx<UserModel?> user = Rx<UserModel?>(null);
   final RxBool isLoading = false.obs;
+
+  Rx<SettingsModel?> get churchSettings => _settingsService.settings;
 
   @override
   void onInit() {
     super.onInit();
     fetchProfile();
+    _settingsService.fetchSettings();
   }
 
   Future<void> fetchProfile() async {
@@ -220,5 +228,9 @@ class ProfileController extends GetxController {
     } finally {
       isLoading.value = false;
     }
+  }
+
+  void logout() {
+    _authService.logout();
   }
 }

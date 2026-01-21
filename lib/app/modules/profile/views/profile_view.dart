@@ -30,9 +30,22 @@ class ProfileView extends GetView<ProfileController> {
         centerTitle: true,
         actions: [
           IconButton(
-            icon: const Icon(Icons.settings, color: AppTheme.primary),
+            icon: const Icon(Icons.logout, color: Colors.white),
             onPressed: () {
-              // Navigate to settings
+              // Show confirmation dialog
+              Get.defaultDialog(
+                title: "Logout",
+                titleStyle: const TextStyle(fontWeight: FontWeight.bold),
+                middleText: "Are you sure you want to logout?",
+                textConfirm: "Yes",
+                textCancel: "No",
+                confirmTextColor: Colors.white,
+                buttonColor: AppTheme.primary,
+                cancelTextColor: AppTheme.textPrimary,
+                onConfirm: () {
+                  controller.logout();
+                },
+              );
             },
           ),
         ],
