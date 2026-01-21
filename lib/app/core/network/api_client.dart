@@ -12,7 +12,7 @@ class ApiClient {
 
   ApiClient() {
     // Updated base URL to use the specified local IP address
-    String baseUrl = 'http://192.168.0.187:3000/api';
+    String baseUrl = 'https://church.theseoconsultant.in/api';
 
     _dio.options.baseUrl = baseUrl;
     _dio.options.connectTimeout = const Duration(seconds: 10);
