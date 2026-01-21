@@ -39,10 +39,10 @@ class AppBottomNavBar extends StatelessWidget {
             isActive: currentRoute == Routes.media,
           ),
           _buildNavItem(
-            icon: Icons.info_outline,
-            label: 'Contact',
-            route: Routes.aboutUs,
-            isActive: currentRoute == Routes.aboutUs,
+            icon: Icons.people_outline,
+            label: 'Directory',
+            route: Routes.directory,
+            isActive: currentRoute == Routes.directory,
           ),
           _buildNavItem(
             icon: Icons.person_outline,

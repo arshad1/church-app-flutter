@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/bottom_nav_bar.dart';
 import '../../../routes/app_pages.dart';
 import '../controllers/media_controller.dart';
 
@@ -32,7 +33,7 @@ class MediaView extends GetView<MediaController> {
                 ),
               ),
             ),
-            _buildBottomNavBar(),
+            const AppBottomNavBar(currentRoute: Routes.media),
           ],
         ),
       ),
@@ -156,10 +157,7 @@ class MediaView extends GetView<MediaController> {
             onTap: () {
               Get.toNamed(
                 Routes.albumDetail,
-                arguments: {
-                  'id': item.id,
-                  'title': item.title,
-                },
+                arguments: {'id': item.id, 'title': item.title},
               );
             },
             child: Column(
@@ -177,8 +175,9 @@ class MediaView extends GetView<MediaController> {
                                   'https://via.placeholder.com/300',
                             ),
                             fit: BoxFit.cover,
-                            onError: (e, s) =>
-                                const AssetImage('assets/images/placeholder.png'),
+                            onError: (e, s) => const AssetImage(
+                              'assets/images/placeholder.png',
+                            ),
                           ),
                         ),
                       ),
@@ -233,70 +232,5 @@ class MediaView extends GetView<MediaController> {
         },
       );
     });
-  }
-
-  Widget _buildBottomNavBar() {
-    return Container(
-      padding: EdgeInsets.symmetric(vertical: 16.h),
-      decoration: const BoxDecoration(
-        color: Colors.black,
-        border: Border(top: BorderSide(color: Color(0xFF1F2937))),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: [
-          _buildNavItem(
-            Icons.home_outlined,
-            'Home',
-            onTap: () => Get.offNamed(Routes.home),
-          ),
-          _buildNavItem(
-            Icons.calendar_today_outlined,
-            'Events',
-            onTap: () => Get.offNamed(Routes.events),
-          ),
-          _buildNavItem(
-            Icons.play_circle_outline,
-            'Media',
-            isActive: true,
-          ),
-          _buildNavItem(
-            Icons.person_outline,
-            'Profile',
-            onTap: () => Get.offNamed(Routes.profile),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildNavItem(
-    IconData icon,
-    String label, {
-    bool isActive = false,
-    VoidCallback? onTap,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            icon,
-            color: isActive ? AppTheme.primary : AppTheme.textSecondary,
-            size: 24.sp,
-          ),
-          SizedBox(height: 4.h),
-          Text(
-            label,
-            style: TextStyle(
-              color: isActive ? AppTheme.primary : AppTheme.textSecondary,
-              fontSize: 10.sp,
-              fontWeight: isActive ? FontWeight.w600 : FontWeight.normal,
-            ),
-          ),
-        ],
-      ),
-    );
   }
 }

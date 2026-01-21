@@ -22,4 +22,7 @@ class UserService extends GetxService {
       rethrow;
     }
   }
+
+  // Alias for getUserProfile
+  Future<UserModel> getMyProfile() => getUserProfile();
 }

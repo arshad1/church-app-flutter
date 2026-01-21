@@ -13,6 +13,8 @@ abstract class Routes {
   static const albumDetail = _Paths.albumDetail;
   static const splash = _Paths.splash;
   static const aboutUs = _Paths.aboutUs;
+  static const directory = _Paths.directory;
+  static const videoPlayer = _Paths.videoPlayer;
 }
 
 abstract class _Paths {
@@ -27,4 +29,6 @@ abstract class _Paths {
   static const albumDetail = '/album-detail';
   static const splash = '/splash';
   static const aboutUs = '/about-us';
+  static const directory = '/directory';
+  static const videoPlayer = '/video-player';
 }

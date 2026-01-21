@@ -9,6 +9,8 @@ import 'app/data/services/settings_service.dart';
 import 'app/data/services/notification_service.dart';
 import 'app/data/services/auth_service.dart';
 import 'app/data/services/content_service.dart';
+import 'app/data/services/family_service.dart';
+import 'app/data/services/user_service.dart';
 import 'app/routes/app_pages.dart';
 
 void main() async {
@@ -29,6 +31,8 @@ void main() async {
   Get.put(AuthService(), permanent: true);
   await Get.putAsync(() => NotificationService().init());
   Get.put(ContentService(), permanent: true);
+  Get.put(FamilyService(), permanent: true);
+  Get.put(UserService(), permanent: true);
 
   runApp(
     ScreenUtilInit(

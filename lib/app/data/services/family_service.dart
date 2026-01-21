@@ -1,6 +1,7 @@
 import 'package:get/get.dart';
 import '../../core/network/api_client.dart';
 import '../models/member_model.dart';
+import '../models/family_model.dart';
 
 class FamilyService extends GetxService {
   final ApiClient _client = ApiClient();
@@ -39,6 +40,16 @@ class FamilyService extends GetxService {
       await _client.delete('/mobile/family/members/$memberId');
     } catch (e) {
       rethrow;
+    }
+  }
+
+  Future<List<FamilyModel>> getAllFamilies() async {
+    try {
+      final response = await _client.get('/mobile/families');
+      final List<dynamic> data = response.data;
+      return data.map((json) => FamilyModel.fromJson(json)).toList();
+    } catch (e) {
+      return [];
     }
   }
 

@@ -19,6 +19,10 @@ import '../modules/media/bindings/album_detail_binding.dart';
 import '../modules/media/views/album_detail_view.dart';
 import '../modules/splash/bindings/splash_binding.dart';
 import '../modules/splash/views/splash_view.dart';
+import '../modules/directory/bindings/directory_binding.dart';
+import '../modules/directory/views/directory_view.dart';
+import '../modules/video_player/bindings/video_player_binding.dart';
+import '../modules/video_player/views/video_player_view.dart';
 
 part 'app_routes.dart';
 
@@ -72,6 +76,16 @@ class AppPages {
       name: _Paths.splash,
       page: () => const SplashView(),
       binding: SplashBinding(),
+    ),
+    GetPage(
+      name: _Paths.directory,
+      page: () => const DirectoryView(),
+      binding: DirectoryBinding(),
+    ),
+    GetPage(
+      name: _Paths.videoPlayer,
+      page: () => const VideoPlayerView(),
+      binding: VideoPlayerBinding(),
     ),
     GetPage(
       name: _Paths.aboutUs,

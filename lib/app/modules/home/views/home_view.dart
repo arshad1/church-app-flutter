@@ -268,7 +268,7 @@ class HomeView extends GetView<HomeController> {
             (e) => e.isLive && e.liveUrl != null,
           );
           if (liveEvent != null) {
-            _launchURL(liveEvent.liveUrl!);
+            _launchURL(liveEvent.liveUrl!, title: liveEvent.title);
           } else {
             // Or just open Events tab if no live event found
             Get.toNamed(Routes.events);
@@ -389,16 +389,30 @@ class HomeView extends GetView<HomeController> {
     });
   }
 
-  Future<void> _launchURL(String url) async {
-    try {
-      final uri = Uri.parse(url);
-      if (await canLaunchUrl(uri)) {
-        await launchUrl(uri, mode: LaunchMode.externalApplication);
-      } else {
-        Get.snackbar('Error', 'Could not launch $url');
+  Future<void> _launchURL(String url, {String? title}) async {
+    // Check if it's a video URL (YouTube or other video links)
+    if (url.contains('youtube.com') ||
+        url.contains('youtu.be') ||
+        url.contains('.mp4') ||
+        url.contains('.m3u8') ||
+        url.toLowerCase().contains('stream')) {
+      // Navigate to in-app video player
+      Get.toNamed(
+        Routes.videoPlayer,
+        arguments: {'url': url, 'title': title ?? 'Live Stream'},
+      );
+    } else {
+      // For non-video URLs, use external launcher
+      try {
+        final uri = Uri.parse(url);
+        if (await canLaunchUrl(uri)) {
+          await launchUrl(uri, mode: LaunchMode.externalApplication);
+        } else {
+          Get.snackbar('Error', 'Could not launch $url');
+        }
+      } catch (e) {
+        Get.snackbar('Error', 'Failed to launch URL: $e');
       }
-    } catch (e) {
-      Get.snackbar('Error', 'Failed to launch URL: $e');
     }
   }
 
@@ -445,7 +459,7 @@ class HomeView extends GetView<HomeController> {
           SizedBox(height: 16.h),
           GestureDetector(
             onTap: canLaunchStream
-                ? () => _launchURL(event.liveUrl!)
+                ? () => _launchURL(event.liveUrl!, title: event.title)
                 : () => Get.toNamed(Routes.events),
             child: Container(
               width: double.infinity,
@@ -656,7 +670,9 @@ class HomeView extends GetView<HomeController> {
               event.liveUrl!.isNotEmpty;
 
           return GestureDetector(
-            onTap: canLaunchStream ? () => _launchURL(event.liveUrl!) : null,
+            onTap: canLaunchStream
+                ? () => _launchURL(event.liveUrl!, title: event.title)
+                : null,
             child: Container(
               margin: EdgeInsets.only(bottom: 16.h),
               padding: EdgeInsets.all(16.w),
