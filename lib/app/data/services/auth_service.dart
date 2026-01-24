@@ -13,24 +13,18 @@ class AuthService extends GetxService {
 
   String get userName {
     final u = user;
-    if (u == null) return "User";
+    if (u == null) return "Guest";
 
-    // Try different common name fields
-    if (u['firstName'] != null) {
-      if (u['lastName'] != null) {
-        return "${u['firstName']} ${u['lastName']}";
-      }
-      return u['firstName'];
-    }
+    // Priority: fullName (from Login), then member.name (from Profile)
+    return u['fullName'] ?? u['member']?['name'] ?? "Member";
+  }
 
-    if (u['name'] != null) return u['name'];
+  String? get userImage {
+    final u = user;
+    if (u == null) return null;
 
-    // Fallback to email username if nothing else
-    if (u['email'] != null) {
-      return u['email'].split('@')[0];
-    }
-
-    return "Member";
+    // Priority: profilePic (from Login), then member.profileImage (from Profile)
+    return u['profilePic'] ?? u['member']?['profileImage'];
   }
 
   Future<dynamic> login(String email, String password) async {
@@ -59,6 +53,18 @@ class AuthService extends GetxService {
       );
     } catch (e) {
       // print("Token registration failed: $e");
+    }
+  }
+
+  Future<void> refreshUser() async {
+    try {
+      final response = await _client.get('/mobile/profile');
+      // Update stored user data
+      if (response.data != null) {
+        _storage.write('user', response.data);
+      }
+    } catch (e) {
+      // print("Failed to refresh user: $e");
     }
   }
 }

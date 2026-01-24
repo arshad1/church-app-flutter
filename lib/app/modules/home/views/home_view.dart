@@ -34,7 +34,12 @@ class HomeView extends GetView<HomeController> {
                     SizedBox(height: 32.h),
                     _buildNoticeBanner(),
                     SizedBox(height: 32.h),
-                    _buildFeaturedEvent(),
+                    _buildSectionHeader(
+                      'Upcoming Events',
+                      onSeeAll: () => Get.toNamed(Routes.events),
+                    ),
+                    SizedBox(height: 16.h),
+                    _buildEventsList(),
                     SizedBox(height: 32.h),
                     _buildSectionHeader(
                       'Gallery',
@@ -43,12 +48,7 @@ class HomeView extends GetView<HomeController> {
                     SizedBox(height: 16.h),
                     _buildGalleryPreview(),
                     SizedBox(height: 32.h),
-                    _buildSectionHeader(
-                      'Upcoming Events',
-                      onSeeAll: () => Get.toNamed(Routes.events),
-                    ),
-                    SizedBox(height: 16.h),
-                    _buildEventsList(),
+                    _buildFeaturedEvent(),
                   ],
                 ),
               ),
@@ -68,9 +68,14 @@ class HomeView extends GetView<HomeController> {
           children: [
             GestureDetector(
               onTap: () => Get.toNamed(Routes.profile),
-              child: CircleAvatar(
-                radius: 20.r,
-                backgroundImage: const AssetImage('assets/images/avatar.png'),
+              child: Obx(
+                () => CircleAvatar(
+                  radius: 20.r,
+                  backgroundImage: controller.userImage.value != null
+                      ? NetworkImage(controller.userImage.value!)
+                            as ImageProvider
+                      : const AssetImage('assets/images/avatar.png'),
+                ),
               ),
             ),
             SizedBox(width: 12.w),
@@ -78,7 +83,7 @@ class HomeView extends GetView<HomeController> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Good Morning, ${controller.userName}',
+                  'Hello, ${controller.userName}',
                   style: TextStyle(
                     color: Colors.white,
                     fontSize: 16.sp,
@@ -246,44 +251,19 @@ class HomeView extends GetView<HomeController> {
   Widget _buildQuickActions() {
     final actions = [
       {
-        'icon': Icons.volunteer_activism,
-        'label': 'Giving',
-        'onTap': () {
-          // TODO: Implement Giving
-        },
+        'icon': Icons.calendar_month,
+        'label': 'Events',
+        'onTap': () => Get.toNamed(Routes.events),
       },
       {
-        'icon': Icons.spa,
-        'label': 'Prayer',
-        'onTap': () {
-          // TODO: Implement Prayer Request
-        },
+        'icon': Icons.people,
+        'label': 'Directory',
+        'onTap': () => Get.toNamed(Routes.directory),
       },
       {
-        'icon': Icons.ondemand_video,
-        'label': 'Live',
-        'onTap': () {
-          // Find live event
-          final liveEvent = controller.upcomingEvents.firstWhereOrNull(
-            (e) => e.isLive && e.liveUrl != null,
-          );
-          if (liveEvent != null) {
-            _launchURL(liveEvent.liveUrl!, title: liveEvent.title);
-          } else {
-            // Or just open Events tab if no live event found
-            Get.toNamed(Routes.events);
-            // Optional: Show snackbar
-            /* Get.snackbar('No Live Event', 'There are no live events streaming right now.',
-                backgroundColor: Colors.orange, colorText: Colors.white, snackPosition: SnackPosition.BOTTOM); */
-          }
-        },
-      },
-      {
-        'icon': Icons.place,
-        'label': 'Check-in',
-        'onTap': () {
-          // TODO: Implement Check-in
-        },
+        'icon': Icons.photo_library,
+        'label': 'Gallery',
+        'onTap': () => Get.toNamed(Routes.media),
       },
     ];
 

@@ -18,7 +18,6 @@ class SettingsService extends GetxService {
         settings.value = SettingsModel.fromJson(response.data);
       }
     } catch (e) {
-      print('Failed to fetch settings: $e');
       // Non-critical, can continue with defaults
     }
   }

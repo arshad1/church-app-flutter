@@ -5,6 +5,9 @@ import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/bottom_nav_bar.dart';
 import '../../../routes/app_pages.dart';
 import '../controllers/directory_controller.dart';
+import '../../profile/views/add_family_member_view.dart';
+import '../../profile/views/edit_family_member_view.dart';
+import '../../profile/bindings/profile_binding.dart';
 
 class DirectoryView extends GetView<DirectoryController> {
   const DirectoryView({super.key});
@@ -29,6 +32,7 @@ class DirectoryView extends GetView<DirectoryController> {
                 ],
               ),
             ),
+
             const AppBottomNavBar(currentRoute: Routes.directory),
           ],
         ),
@@ -52,6 +56,18 @@ class DirectoryView extends GetView<DirectoryController> {
           ),
           Row(
             children: [
+              IconButton(
+                icon: Icon(
+                  Icons.person_add,
+                  color: AppTheme.primary,
+                  size: 24.sp,
+                ),
+                onPressed: () => Get.to(
+                  () => const AddFamilyMemberView(),
+                  binding: ProfileBinding(),
+                )?.then((_) => controller.refresh()),
+                tooltip: 'Add Member',
+              ),
               Obx(
                 () => IconButton(
                   icon: Icon(
@@ -261,67 +277,73 @@ class DirectoryView extends GetView<DirectoryController> {
                     ? BorderRadius.vertical(bottom: Radius.circular(12.r))
                     : null,
               ),
-              child: Row(
-                children: [
-                  Expanded(
-                    flex: 3,
-                    child: Row(
-                      children: [
-                        CircleAvatar(
-                          radius: 16.r,
-                          backgroundColor: AppTheme.primary.withValues(
-                            alpha: 0.2,
-                          ),
-                          child: Text(
-                            member.name?.substring(0, 1).toUpperCase() ?? '?',
-                            style: TextStyle(
-                              color: AppTheme.primary,
-                              fontSize: 14.sp,
-                              fontWeight: FontWeight.bold,
+              child: InkWell(
+                onTap: () => Get.to(
+                  () => EditFamilyMemberView(member: member),
+                  binding: ProfileBinding(),
+                )?.then((_) => controller.refresh()),
+                child: Row(
+                  children: [
+                    Expanded(
+                      flex: 3,
+                      child: Row(
+                        children: [
+                          CircleAvatar(
+                            radius: 16.r,
+                            backgroundColor: AppTheme.primary.withValues(
+                              alpha: 0.2,
+                            ),
+                            child: Text(
+                              member.name?.substring(0, 1).toUpperCase() ?? '?',
+                              style: TextStyle(
+                                color: AppTheme.primary,
+                                fontSize: 14.sp,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                           ),
-                        ),
-                        SizedBox(width: 12.w),
-                        Expanded(
-                          child: Text(
-                            member.name ?? 'Unknown',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 14.sp,
-                              fontWeight: FontWeight.w500,
+                          SizedBox(width: 12.w),
+                          Expanded(
+                            child: Text(
+                              member.name ?? 'Unknown',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 14.sp,
+                                fontWeight: FontWeight.w500,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                             ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
                           ),
+                        ],
+                      ),
+                    ),
+                    Expanded(
+                      flex: 2,
+                      child: Text(
+                        member.familyRole ?? 'N/A',
+                        style: TextStyle(
+                          color: AppTheme.textSecondary,
+                          fontSize: 12.sp,
                         ),
-                      ],
-                    ),
-                  ),
-                  Expanded(
-                    flex: 2,
-                    child: Text(
-                      member.familyRole ?? 'N/A',
-                      style: TextStyle(
-                        color: AppTheme.textSecondary,
-                        fontSize: 12.sp,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
                     ),
-                  ),
-                  Expanded(
-                    flex: 2,
-                    child: Text(
-                      member.phone ?? 'N/A',
-                      style: TextStyle(
-                        color: AppTheme.textSecondary,
-                        fontSize: 12.sp,
+                    Expanded(
+                      flex: 2,
+                      child: Text(
+                        member.phone ?? 'N/A',
+                        style: TextStyle(
+                          color: AppTheme.textSecondary,
+                          fontSize: 12.sp,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             );
           }),
@@ -344,7 +366,6 @@ class DirectoryView extends GetView<DirectoryController> {
 
           return Container(
             margin: EdgeInsets.only(left: (indentLevel * 24).w, bottom: 12.h),
-            padding: EdgeInsets.all(16.w),
             decoration: BoxDecoration(
               color: AppTheme.surface,
               borderRadius: BorderRadius.circular(12.r),
@@ -352,99 +373,108 @@ class DirectoryView extends GetView<DirectoryController> {
                   ? Border.all(color: AppTheme.primary, width: 2)
                   : null,
             ),
-            child: Row(
-              children: [
-                if (!isHead)
-                  Container(
-                    width: 2,
-                    height: 40.h,
-                    color: AppTheme.primary.withValues(alpha: 0.3),
-                    margin: EdgeInsets.only(right: 12.w),
-                  ),
-                CircleAvatar(
-                  radius: 24.r,
-                  backgroundColor: isHead
-                      ? AppTheme.primary
-                      : AppTheme.primary.withValues(alpha: 0.2),
-                  child: Text(
-                    member.name?.substring(0, 1).toUpperCase() ?? '?',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 18.sp,
-                      fontWeight: FontWeight.bold,
+            child: InkWell(
+              onTap: () => Get.to(
+                () => EditFamilyMemberView(member: member),
+                binding: ProfileBinding(),
+              )?.then((_) => controller.refresh()),
+              child: Padding(
+                padding: EdgeInsets.all(16.w),
+                child: Row(
+                  children: [
+                    if (!isHead)
+                      Container(
+                        width: 2,
+                        height: 40.h,
+                        color: AppTheme.primary.withValues(alpha: 0.3),
+                        margin: EdgeInsets.only(right: 12.w),
+                      ),
+                    CircleAvatar(
+                      radius: 24.r,
+                      backgroundColor: isHead
+                          ? AppTheme.primary
+                          : AppTheme.primary.withValues(alpha: 0.2),
+                      child: Text(
+                        member.name?.substring(0, 1).toUpperCase() ?? '?',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 18.sp,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     ),
-                  ),
-                ),
-                SizedBox(width: 12.w),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
+                    SizedBox(width: 12.w),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Expanded(
-                            child: Text(
-                              member.name ?? 'Unknown',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 16.sp,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                          if (isHead)
-                            Container(
-                              padding: EdgeInsets.symmetric(
-                                horizontal: 8.w,
-                                vertical: 4.h,
-                              ),
-                              decoration: BoxDecoration(
-                                color: AppTheme.primary,
-                                borderRadius: BorderRadius.circular(4.r),
-                              ),
-                              child: Text(
-                                'HEAD',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 10.sp,
-                                  fontWeight: FontWeight.bold,
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  member.name ?? 'Unknown',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 16.sp,
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
                               ),
-                            ),
-                        ],
-                      ),
-                      SizedBox(height: 4.h),
-                      Text(
-                        member.familyRole ?? 'N/A',
-                        style: TextStyle(
-                          color: AppTheme.textSecondary,
-                          fontSize: 12.sp,
-                        ),
-                      ),
-                      if (member.phone != null) ...[
-                        SizedBox(height: 4.h),
-                        Row(
-                          children: [
-                            Icon(
-                              Icons.phone,
+                              if (isHead)
+                                Container(
+                                  padding: EdgeInsets.symmetric(
+                                    horizontal: 8.w,
+                                    vertical: 4.h,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: AppTheme.primary,
+                                    borderRadius: BorderRadius.circular(4.r),
+                                  ),
+                                  child: Text(
+                                    'HEAD',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 10.sp,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                            ],
+                          ),
+                          SizedBox(height: 4.h),
+                          Text(
+                            member.familyRole ?? 'N/A',
+                            style: TextStyle(
                               color: AppTheme.textSecondary,
-                              size: 12.sp,
+                              fontSize: 12.sp,
                             ),
-                            SizedBox(width: 4.w),
-                            Text(
-                              member.phone!,
-                              style: TextStyle(
-                                color: AppTheme.textSecondary,
-                                fontSize: 12.sp,
-                              ),
+                          ),
+                          if (member.phone != null) ...[
+                            SizedBox(height: 4.h),
+                            Row(
+                              children: [
+                                Icon(
+                                  Icons.phone,
+                                  color: AppTheme.textSecondary,
+                                  size: 12.sp,
+                                ),
+                                SizedBox(width: 4.w),
+                                Text(
+                                  member.phone!,
+                                  style: TextStyle(
+                                    color: AppTheme.textSecondary,
+                                    fontSize: 12.sp,
+                                  ),
+                                ),
+                              ],
                             ),
                           ],
-                        ),
-                      ],
-                    ],
-                  ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
-              ],
+              ),
             ),
           );
         }).toList(),

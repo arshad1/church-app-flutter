@@ -1,4 +1,5 @@
 import 'package:get/get.dart';
+import 'package:get_storage/get_storage.dart';
 import '../../../data/models/announcement.dart';
 import '../../../data/models/event.dart';
 import '../../../data/models/bible_verse.dart';
@@ -12,6 +13,8 @@ class HomeController extends GetxController {
   final AuthService _authService = Get.find<AuthService>();
 
   String get userName => _authService.userName;
+
+  final RxnString userImage = RxnString(); // Reactive user image
 
   final announcements = <Announcement>[].obs;
   final upcomingEvents = <Event>[].obs;
@@ -29,6 +32,15 @@ class HomeController extends GetxController {
   @override
   void onInit() {
     super.onInit();
+    // Initialize user image
+    userImage.value = _authService.userImage;
+
+    // Listen for storage changes to update image dynamically
+    final storage = GetStorage();
+    storage.listenKey('user', (val) {
+      userImage.value = _authService.userImage;
+    });
+
     fetchContent();
   }
 

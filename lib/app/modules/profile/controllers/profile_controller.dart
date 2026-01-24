@@ -120,6 +120,8 @@ class ProfileController extends GetxController {
         backgroundColor: Colors.green,
         colorText: Colors.white,
       );
+      await _authService
+          .refreshUser(); // Refresh local user data for Home screen
       fetchProfile(); // Refresh profile
     } catch (e) {
       Get.snackbar(
@@ -183,6 +185,10 @@ class ProfileController extends GetxController {
         backgroundColor: Colors.green,
         colorText: Colors.white,
       );
+      // specific member update might check if it's the logged-in user
+      if (memberId == user.value?.member?.id) {
+        await _authService.refreshUser();
+      }
       fetchProfile();
     } catch (e) {
       Get.snackbar(

@@ -73,6 +73,7 @@ class DirectoryController extends GetxController {
     viewMode.value = viewMode.value == 'table' ? 'tree' : 'table';
   }
 
+  @override
   void refresh() {
     fetchUserFamily();
   }
