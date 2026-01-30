@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:intl/intl.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../routes/app_pages.dart';
 import '../controllers/events_controller.dart';
@@ -139,12 +140,13 @@ class EventsView extends GetView<EventsController> {
         return const SizedBox.shrink();
       }
 
-      final canLaunchStream = featuredEvent.isLive &&
-                              featuredEvent.liveUrl != null &&
-                              featuredEvent.liveUrl!.isNotEmpty;
+      final canLaunchStream =
+          featuredEvent.isLive &&
+          featuredEvent.liveUrl != null &&
+          featuredEvent.liveUrl!.isNotEmpty;
 
       return GestureDetector(
-        onTap: canLaunchStream ? () => _launchStream(featuredEvent.liveUrl!) : null,
+        onTap: () => _showEventDetails(featuredEvent),
         child: Container(
           width: double.infinity,
           height: 200.h,
@@ -171,7 +173,10 @@ class EventsView extends GetView<EventsController> {
                 Row(
                   children: [
                     Container(
-                      padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 12.w,
+                        vertical: 6.h,
+                      ),
                       decoration: BoxDecoration(
                         color: featuredEvent.isLive
                             ? Colors.red
@@ -182,11 +187,7 @@ class EventsView extends GetView<EventsController> {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           if (featuredEvent.isLive) ...[
-                            Icon(
-                              Icons.circle,
-                              color: Colors.white,
-                              size: 8.sp,
-                            ),
+                            Icon(Icons.circle, color: Colors.white, size: 8.sp),
                             SizedBox(width: 4.w),
                           ],
                           Text(
@@ -203,7 +204,10 @@ class EventsView extends GetView<EventsController> {
                     if (canLaunchStream) ...[
                       SizedBox(width: 8.w),
                       Container(
-                        padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 8.w,
+                          vertical: 4.h,
+                        ),
                         decoration: BoxDecoration(
                           color: Colors.white.withValues(alpha: 0.2),
                           borderRadius: BorderRadius.circular(6.r),
@@ -243,7 +247,8 @@ class EventsView extends GetView<EventsController> {
                   overflow: TextOverflow.ellipsis,
                 ),
                 SizedBox(height: 8.h),
-                if (featuredEvent.description != null && featuredEvent.description!.isNotEmpty)
+                if (featuredEvent.description != null &&
+                    featuredEvent.description!.isNotEmpty)
                   Text(
                     featuredEvent.description!,
                     style: TextStyle(
@@ -264,9 +269,7 @@ class EventsView extends GetView<EventsController> {
   Widget _buildUpcomingEventsList() {
     return Obx(() {
       if (controller.isLoading.value) {
-        return const Center(
-          child: CircularProgressIndicator(),
-        );
+        return const Center(child: CircularProgressIndicator());
       }
 
       final events = controller.upcomingEvents;
@@ -275,10 +278,7 @@ class EventsView extends GetView<EventsController> {
         return Center(
           child: Text(
             'No upcoming events',
-            style: TextStyle(
-              color: AppTheme.textSecondary,
-              fontSize: 14.sp,
-            ),
+            style: TextStyle(color: AppTheme.textSecondary, fontSize: 14.sp),
           ),
         );
       }
@@ -288,12 +288,13 @@ class EventsView extends GetView<EventsController> {
           final dateTime = DateTime.parse(event.startDate);
           final month = _getMonthAbbreviation(dateTime.month);
           final day = dateTime.day.toString();
-          final canLaunchStream = event.isLive &&
-                                  event.liveUrl != null &&
-                                  event.liveUrl!.isNotEmpty;
+          final canLaunchStream =
+              event.isLive &&
+              event.liveUrl != null &&
+              event.liveUrl!.isNotEmpty;
 
           return GestureDetector(
-            onTap: canLaunchStream ? () => _launchStream(event.liveUrl!) : null,
+            onTap: () => _showEventDetails(event),
             child: Container(
               margin: EdgeInsets.only(bottom: 16.h),
               padding: EdgeInsets.all(16.w),
@@ -301,7 +302,10 @@ class EventsView extends GetView<EventsController> {
                 color: AppTheme.surface,
                 borderRadius: BorderRadius.circular(16.r),
                 border: event.isLive
-                    ? Border.all(color: Colors.red.withValues(alpha: 0.5), width: 2)
+                    ? Border.all(
+                        color: Colors.red.withValues(alpha: 0.5),
+                        width: 2,
+                      )
                     : null,
               ),
               child: Row(
@@ -431,8 +435,12 @@ class EventsView extends GetView<EventsController> {
                     ),
                   ),
                   Icon(
-                    canLaunchStream ? Icons.play_circle_fill : Icons.chevron_right,
-                    color: canLaunchStream ? Colors.red : AppTheme.textSecondary,
+                    canLaunchStream
+                        ? Icons.play_circle_fill
+                        : Icons.chevron_right,
+                    color: canLaunchStream
+                        ? Colors.red
+                        : AppTheme.textSecondary,
                     size: 24.sp,
                   ),
                 ],
@@ -446,8 +454,18 @@ class EventsView extends GetView<EventsController> {
 
   String _getMonthAbbreviation(int month) {
     const months = [
-      'JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN',
-      'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'
+      'JAN',
+      'FEB',
+      'MAR',
+      'APR',
+      'MAY',
+      'JUN',
+      'JUL',
+      'AUG',
+      'SEP',
+      'OCT',
+      'NOV',
+      'DEC',
     ];
     return months[month - 1];
   }
@@ -483,5 +501,146 @@ class EventsView extends GetView<EventsController> {
         colorText: Colors.white,
       );
     }
+  }
+
+  void _showEventDetails(event) {
+    final dateTime = DateTime.parse(event.startDate);
+    final canLaunchStream =
+        event.isLive && event.liveUrl != null && event.liveUrl!.isNotEmpty;
+
+    Get.bottomSheet(
+      Container(
+        padding: EdgeInsets.all(24.w),
+        decoration: BoxDecoration(
+          color: AppTheme.surface,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24.r)),
+        ),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Handle Drag Indicator
+              Center(
+                child: Container(
+                  width: 40.w,
+                  height: 4.h,
+                  margin: EdgeInsets.only(bottom: 24.h),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.2),
+                    borderRadius: BorderRadius.circular(2.r),
+                  ),
+                ),
+              ),
+              // Note: Event model does not have imageUrl, so skipping image display
+              Text(
+                event.title,
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 24.sp,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              SizedBox(height: 16.h),
+              _buildDetailRow(
+                Icons.calendar_today,
+                DateFormat('EEEE, MMMM d, yyyy').format(dateTime),
+              ),
+              SizedBox(height: 12.h),
+              _buildDetailRow(
+                Icons.access_time,
+                DateFormat('h:mm a').format(dateTime),
+              ),
+              if (event.location != null) ...[
+                SizedBox(height: 12.h),
+                _buildDetailRow(Icons.place, event.location!),
+              ],
+              SizedBox(height: 24.h),
+              Text(
+                "Description",
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 18.sp,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              SizedBox(height: 8.h),
+              Text(
+                event.description ?? "No description available.",
+                style: TextStyle(
+                  color: AppTheme.textSecondary,
+                  fontSize: 14.sp,
+                  height: 1.5,
+                ),
+              ),
+              SizedBox(height: 32.h),
+              if (canLaunchStream)
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Get.back();
+                      _launchStream(event.liveUrl!);
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.red,
+                      padding: EdgeInsets.symmetric(vertical: 16.h),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12.r),
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.play_circle_fill,
+                          color: Colors.white,
+                          size: 20.sp,
+                        ),
+                        SizedBox(width: 8.w),
+                        Text(
+                          "Watch Live Stream",
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 16.sp,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
+      isScrollControlled: true,
+    );
+  }
+
+  Widget _buildDetailRow(IconData icon, String text) {
+    return Row(
+      children: [
+        Container(
+          padding: EdgeInsets.all(8.w),
+          decoration: BoxDecoration(
+            color: AppTheme.primary.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(8.r),
+          ),
+          child: Icon(icon, color: AppTheme.primary, size: 20.sp),
+        ),
+        SizedBox(width: 12.w),
+        Expanded(
+          child: Text(
+            text,
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 16.sp,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ),
+      ],
+    );
   }
 }
