@@ -644,15 +644,9 @@ class HomeView extends GetView<HomeController> {
           final dateTime = DateTime.parse(event.startDate);
           final month = _getMonthAbbreviation(dateTime.month);
           final day = dateTime.day.toString();
-          final canLaunchStream =
-              event.isLive &&
-              event.liveUrl != null &&
-              event.liveUrl!.isNotEmpty;
 
           return GestureDetector(
-            onTap: canLaunchStream
-                ? () => _launchURL(event.liveUrl!, title: event.title)
-                : null,
+            onTap: () => _showEventDetails(event),
             child: Container(
               margin: EdgeInsets.only(bottom: 16.h),
               padding: EdgeInsets.all(16.w),
@@ -789,17 +783,26 @@ class HomeView extends GetView<HomeController> {
                             ],
                           ],
                         ),
+                        if (event.description != null &&
+                            event.description!.isNotEmpty) ...[
+                          SizedBox(height: 8.h),
+                          Text(
+                            event.description!,
+                            style: TextStyle(
+                              color: AppTheme.textSecondary,
+                              fontSize: 12.sp,
+                            ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
                       ],
                     ),
                   ),
                   Icon(
-                    canLaunchStream
-                        ? Icons.play_circle_fill
-                        : Icons.chevron_right,
-                    color: canLaunchStream
-                        ? Colors.red
-                        : AppTheme.textSecondary,
-                    size: 24.sp,
+                    Icons.chevron_right,
+                    color: AppTheme.textSecondary,
+                    size: 20.sp,
                   ),
                 ],
               ),
@@ -808,6 +811,147 @@ class HomeView extends GetView<HomeController> {
         }).toList(),
       );
     });
+  }
+
+  void _showEventDetails(event) {
+    final dateTime = DateTime.parse(event.startDate);
+    final canLaunchStream =
+        event.isLive && event.liveUrl != null && event.liveUrl!.isNotEmpty;
+
+    Get.bottomSheet(
+      Container(
+        padding: EdgeInsets.all(24.w),
+        decoration: BoxDecoration(
+          color: AppTheme.surface,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24.r)),
+        ),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Handle Drag Indicator
+              Center(
+                child: Container(
+                  width: 40.w,
+                  height: 4.h,
+                  margin: EdgeInsets.only(bottom: 24.h),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.2),
+                    borderRadius: BorderRadius.circular(2.r),
+                  ),
+                ),
+              ),
+
+              Text(
+                event.title,
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 24.sp,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              SizedBox(height: 16.h),
+              _buildDetailRow(
+                Icons.calendar_today,
+                DateFormat('EEEE, MMMM d, yyyy').format(dateTime),
+              ),
+              SizedBox(height: 12.h),
+              _buildDetailRow(
+                Icons.access_time,
+                DateFormat('h:mm a').format(dateTime),
+              ),
+              if (event.location != null) ...[
+                SizedBox(height: 12.h),
+                _buildDetailRow(Icons.place, event.location!),
+              ],
+              SizedBox(height: 24.h),
+              Text(
+                "Description",
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 18.sp,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              SizedBox(height: 8.h),
+              Text(
+                event.description ?? "No description available.",
+                style: TextStyle(
+                  color: AppTheme.textSecondary,
+                  fontSize: 14.sp,
+                  height: 1.5,
+                ),
+              ),
+              SizedBox(height: 32.h),
+              if (canLaunchStream)
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Get.back();
+                      _launchURL(event.liveUrl!, title: event.title);
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.red,
+                      padding: EdgeInsets.symmetric(vertical: 16.h),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12.r),
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.play_circle_fill,
+                          color: Colors.white,
+                          size: 20.sp,
+                        ),
+                        SizedBox(width: 8.w),
+                        Text(
+                          "Watch Live Stream",
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 16.sp,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
+      isScrollControlled: true,
+    );
+  }
+
+  Widget _buildDetailRow(IconData icon, String text) {
+    return Row(
+      children: [
+        Container(
+          padding: EdgeInsets.all(8.w),
+          decoration: BoxDecoration(
+            color: AppTheme.primary.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(8.r),
+          ),
+          child: Icon(icon, color: AppTheme.primary, size: 20.sp),
+        ),
+        SizedBox(width: 12.w),
+        Expanded(
+          child: Text(
+            text,
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 16.sp,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ),
+      ],
+    );
   }
 
   String _getMonthAbbreviation(int month) {
