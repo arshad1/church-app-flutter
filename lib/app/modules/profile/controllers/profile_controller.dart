@@ -44,10 +44,13 @@ class ProfileController extends GetxController {
     }
   }
 
-  Future<void> addFamilyMember(Map<String, dynamic> data) async {
+  Future<void> addFamilyMember(
+    Map<String, dynamic> data,
+    File? imageFile,
+  ) async {
     isLoading.value = true;
     try {
-      await _familyService.addFamilyMember(data);
+      await _familyService.addFamilyMember(data, imageFile);
       Get.back(); // Close the add member screen
       Get.snackbar(
         'Success',

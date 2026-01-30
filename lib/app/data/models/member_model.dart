@@ -18,6 +18,8 @@ class MemberModel {
   FamilyModel? family;
   List<SacramentModel>? sacraments;
 
+  bool? headOfFamily;
+
   MemberModel({
     this.id,
     this.name,
@@ -33,6 +35,7 @@ class MemberModel {
     this.createdAt,
     this.family,
     this.sacraments,
+    this.headOfFamily,
   });
 
   MemberModel.fromJson(Map<String, dynamic> json) {
@@ -48,6 +51,7 @@ class MemberModel {
     familyId = json['familyId'];
     spouseId = json['spouseId'];
     houseId = json['houseId'];
+    headOfFamily = json['headOfFamily'];
     createdAt = json['createdAt'] != null
         ? DateTime.tryParse(json['createdAt'])
         : null;
@@ -76,6 +80,7 @@ class MemberModel {
     data['familyId'] = familyId;
     data['spouseId'] = spouseId;
     data['houseId'] = houseId;
+    data['headOfFamily'] = headOfFamily;
     data['createdAt'] = createdAt?.toIso8601String();
     if (family != null) {
       data['family'] = family!.toJson();

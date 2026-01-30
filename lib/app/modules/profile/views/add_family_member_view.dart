@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/utils/image_helper.dart';
+import 'package:image_picker/image_picker.dart';
+import 'dart:io';
 import '../controllers/profile_controller.dart';
 
 class AddFamilyMemberView extends StatefulWidget {
@@ -20,7 +23,23 @@ class _AddFamilyMemberViewState extends State<AddFamilyMemberView> {
   DateTime? _selectedDate;
   String? _selectedGender;
   int? _selectedHouseId;
+
   int? _selectedSpouseId;
+
+  File? _selectedImage;
+  final ImagePicker _picker = ImagePicker();
+
+  Future<void> _pickImage() async {
+    final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
+    if (image != null) {
+      final processedImage = await ImageHelper.processImage(File(image.path));
+      if (processedImage != null) {
+        setState(() {
+          _selectedImage = processedImage;
+        });
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -54,6 +73,52 @@ class _AddFamilyMemberViewState extends State<AddFamilyMemberView> {
                   color: Colors.white,
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 24),
+              Center(
+                child: GestureDetector(
+                  onTap: _pickImage,
+                  child: Stack(
+                    children: [
+                      Container(
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(color: AppTheme.surface, width: 4),
+                        ),
+                        child: CircleAvatar(
+                          radius: 50,
+                          backgroundColor: AppTheme.surface,
+                          backgroundImage: _selectedImage != null
+                              ? FileImage(_selectedImage!)
+                              : null,
+                          child: _selectedImage == null
+                              ? const Icon(
+                                  Icons.person,
+                                  size: 50,
+                                  color: Colors.grey,
+                                )
+                              : null,
+                        ),
+                      ),
+                      Positioned(
+                        right: 0,
+                        bottom: 0,
+                        child: Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: const BoxDecoration(
+                            color: AppTheme.primary,
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.camera_alt,
+                            color: Colors.white,
+                            size: 18,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
               const SizedBox(height: 24),
@@ -225,7 +290,7 @@ class _AddFamilyMemberViewState extends State<AddFamilyMemberView> {
                                 if (_selectedSpouseId != null)
                                   'spouseId': _selectedSpouseId,
                               };
-                              controller.addFamilyMember(data);
+                              controller.addFamilyMember(data, _selectedImage);
                             }
                           },
                     style: ElevatedButton.styleFrom(

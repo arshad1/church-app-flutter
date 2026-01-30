@@ -285,74 +285,78 @@ class ProfileView extends GetView<ProfileController> {
                   fontWeight: FontWeight.bold,
                 ),
               ),
-              TextButton(
-                onPressed: () => Get.to(() => const EditFamilyView()),
-                child: const Text(
-                  "Edit Family",
-                  style: TextStyle(
-                    color: AppTheme.primary,
-                    fontWeight: FontWeight.bold,
+              Row(
+                children: [
+                  IconButton(
+                    onPressed: () => Get.to(() => const AddFamilyMemberView()),
+                    icon: const Icon(Icons.add, color: AppTheme.primary),
+                    tooltip: 'Add Member',
                   ),
-                ),
+                  TextButton(
+                    onPressed: () => Get.to(() => const EditFamilyView()),
+                    child: const Text(
+                      "Edit Family",
+                      style: TextStyle(
+                        color: AppTheme.primary,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
           const SizedBox(height: 16),
-          if (familyMembers.isEmpty)
-            const Text(
-              "No family members found.",
-              style: TextStyle(color: AppTheme.textSecondary),
-            )
-          else
-            SizedBox(
-              height: 120,
-              child: ListView.separated(
-                scrollDirection: Axis.horizontal,
-                itemCount: familyMembers.length + 1, // +1 for Add button
-                separatorBuilder: (c, i) => const SizedBox(width: 16),
-                itemBuilder: (context, index) {
-                  if (index == familyMembers.length) {
-                    return _buildAddFamilyButton();
-                  }
-                  final fMember = familyMembers[index];
-                  // Show full name
-                  final fullName = fMember.name ?? '?';
-                  final firstName = fullName.split(
-                    ' ',
-                  )[0]; // Still use first char for avatar
-                  return GestureDetector(
-                    onTap: () =>
-                        Get.to(() => EditFamilyMemberView(member: fMember)),
-                    child: Column(
-                      children: [
-                        CircleAvatar(
-                          radius: 35,
-                          backgroundColor: AppTheme.surface,
-                          backgroundImage: fMember.profileImage != null
-                              ? NetworkImage(fMember.profileImage!)
-                              : null,
-                          child: fMember.profileImage == null
-                              ? Text(
-                                  firstName.isNotEmpty ? firstName[0] : '?',
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 24,
-                                  ),
-                                )
-                              : null,
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          fullName,
-                          style: const TextStyle(color: Colors.white),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ],
-                    ),
-                  );
-                },
-              ),
+          // Always show the list so the "Add" button at the end is visible
+          SizedBox(
+            height: 120,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              itemCount: familyMembers.length + 1, // +1 for Add button
+              separatorBuilder: (c, i) => const SizedBox(width: 16),
+              itemBuilder: (context, index) {
+                if (index == familyMembers.length) {
+                  return _buildAddFamilyButton();
+                }
+                final fMember = familyMembers[index];
+                // Show full name
+                final fullName = fMember.name ?? '?';
+                final firstName = fullName.split(
+                  ' ',
+                )[0]; // Still use first char for avatar
+                return GestureDetector(
+                  onTap: () =>
+                      Get.to(() => EditFamilyMemberView(member: fMember)),
+                  child: Column(
+                    children: [
+                      CircleAvatar(
+                        radius: 35,
+                        backgroundColor: AppTheme.surface,
+                        backgroundImage: fMember.profileImage != null
+                            ? NetworkImage(fMember.profileImage!)
+                            : null,
+                        child: fMember.profileImage == null
+                            ? Text(
+                                firstName.isNotEmpty ? firstName[0] : '?',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 24,
+                                ),
+                              )
+                            : null,
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        fullName,
+                        style: const TextStyle(color: Colors.white),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
+                );
+              },
             ),
+          ),
         ],
       ),
     );

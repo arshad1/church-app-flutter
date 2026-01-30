@@ -1,80 +1,116 @@
 import 'package:get/get.dart';
 import '../../../data/models/family_model.dart';
-import '../../../data/models/member_model.dart';
-import '../../../data/services/user_service.dart';
+import 'package:flutter/material.dart';
+import '../../../data/services/family_service.dart';
 
 class DirectoryController extends GetxController {
-  final UserService _userService = Get.find<UserService>();
+  final FamilyService _familyService = Get.put(FamilyService());
+  final ScrollController scrollController = ScrollController();
 
-  final family = Rxn<FamilyModel>();
-  final members = <MemberModel>[].obs;
-  final filteredMembers = <MemberModel>[].obs;
+  final families = <FamilyModel>[].obs;
   final isLoading = true.obs;
+  final isLoadMore = false.obs;
   final searchQuery = ''.obs;
-  final viewMode = 'table'.obs; // 'table' or 'tree'
 
-  String? familyName;
-  String? houseName;
+  // Pagination
+  int currentPage = 1;
+  int totalPages = 1;
+  final int limit = 20;
 
   @override
   void onInit() {
     super.onInit();
-    fetchUserFamily();
+    fetchDirectory();
+
+    // Setup scroll listener for pagination
+    scrollController.addListener(() {
+      if (scrollController.position.pixels >=
+          scrollController.position.maxScrollExtent - 200) {
+        if (!isLoadMore.value && currentPage < totalPages) {
+          loadMore();
+        }
+      }
+    });
+
+    // Setup debounce for search
+    debounce(searchQuery, (callback) {
+      if (!isLoading.value) {
+        // Prevent search if initial load is happening
+        fetchDirectory(isRefresh: true);
+      }
+    }, time: const Duration(milliseconds: 500));
   }
 
-  Future<void> fetchUserFamily() async {
-    isLoading.value = true;
+  @override
+  void onClose() {
+    scrollController.dispose();
+    super.onClose();
+  }
+
+  Future<void> fetchDirectory({bool isRefresh = false}) async {
+    if (isRefresh) {
+      isLoading.value = true;
+      currentPage = 1;
+      families.clear();
+    }
+
     try {
-      // Fetch user profile which includes family data
-      final user = await _userService.getMyProfile();
+      final response = await _familyService.getDirectory(
+        page: currentPage,
+        limit: limit,
+        search: searchQuery.value,
+      );
 
-      if (user.member?.family != null) {
-        family.value = user.member!.family;
-        familyName = user.member!.family!.name;
+      final List<dynamic> data = response['data'] ?? [];
+      final Map<String, dynamic> meta = response['meta'] ?? {};
 
-        // Get house name if user belongs to a house
-        if (user.member!.houseId != null &&
-            user.member!.family!.houses != null) {
-          final userHouse = user.member!.family!.houses!.firstWhere(
-            (h) => h.id == user.member!.houseId,
-            orElse: () => user.member!.family!.houses!.first,
-          );
-          houseName = userHouse.name;
-        }
+      totalPages = meta['pages'] ?? 1;
 
-        // Get all family members
-        final allMembers = user.member!.family!.members ?? [];
-        members.assignAll(allMembers);
-        filteredMembers.assignAll(allMembers);
+      final newFamilies = data
+          .map((json) => FamilyModel.fromJson(json))
+          .toList();
+
+      if (isRefresh) {
+        families.assignAll(newFamilies);
+      } else {
+        families.addAll(newFamilies);
       }
     } catch (e) {
-      Get.snackbar('Error', 'Failed to load family data: $e');
+      Get.snackbar('Error', 'Failed to load directory: $e');
     } finally {
       isLoading.value = false;
     }
   }
 
-  void searchMembers(String query) {
-    searchQuery.value = query;
-    if (query.isEmpty) {
-      filteredMembers.assignAll(members);
-    } else {
-      filteredMembers.assignAll(
-        members.where((member) {
-          final name = member.name?.toLowerCase() ?? '';
-          final searchLower = query.toLowerCase();
-          return name.contains(searchLower);
-        }).toList(),
+  Future<void> loadMore() async {
+    isLoadMore.value = true;
+    currentPage++;
+    try {
+      final response = await _familyService.getDirectory(
+        page: currentPage,
+        limit: limit,
+        search: searchQuery.value,
       );
+
+      final List<dynamic> data = response['data'] ?? [];
+      final newFamilies = data
+          .map((json) => FamilyModel.fromJson(json))
+          .toList();
+      families.addAll(newFamilies);
+    } catch (e) {
+      currentPage--; // Revert page increment on failure
+    } finally {
+      isLoadMore.value = false;
     }
   }
 
-  void toggleViewMode() {
-    viewMode.value = viewMode.value == 'table' ? 'tree' : 'table';
+  void searchDirectory(String query) {
+    searchQuery.value = query;
+    // Debounce listener will trigger fetchDirectory
   }
 
   @override
   void refresh() {
-    fetchUserFamily();
+    fetchDirectory(isRefresh: true);
   }
 }
