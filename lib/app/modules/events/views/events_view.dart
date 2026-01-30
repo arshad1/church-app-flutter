@@ -431,6 +431,19 @@ class EventsView extends GetView<EventsController> {
                             ],
                           ],
                         ),
+                        if (event.description != null &&
+                            event.description!.isNotEmpty) ...[
+                          SizedBox(height: 8.h),
+                          Text(
+                            event.description!,
+                            style: TextStyle(
+                              color: AppTheme.textSecondary,
+                              fontSize: 12.sp,
+                            ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
                       ],
                     ),
                   ),
