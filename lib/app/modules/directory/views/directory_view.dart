@@ -6,11 +6,12 @@ import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/bottom_nav_bar.dart';
 import '../../../routes/app_pages.dart';
 import '../controllers/directory_controller.dart';
+import '../../../data/models/family_model.dart';
+import '../../../data/models/member_model.dart';
 
 class DirectoryView extends GetView<DirectoryController> {
   const DirectoryView({super.key});
 
-  @override
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -128,137 +129,183 @@ class DirectoryView extends GetView<DirectoryController> {
     });
   }
 
-  Widget _buildFamilyCard(family) {
-    bool hasMultipleHouses = family.houses != null && family.houses!.length > 1;
-    bool hasSingleHouse = family.houses != null && family.houses!.length == 1;
-
-    // Common decoration for the card container
-    BoxDecoration cardDecoration = BoxDecoration(
-      color: AppTheme.surface,
-      borderRadius: BorderRadius.circular(12.r),
-      border: Border.all(color: AppTheme.surface, width: 1),
-    );
-
-    if (hasSingleHouse) {
-      // Single House: Show House Name as Parent Node
-      var house = family.houses![0];
-      return Container(
-        margin: EdgeInsets.only(bottom: 16.h),
-        decoration: cardDecoration,
-        child: Theme(
-          data: Theme.of(
-            Get.context!,
-          ).copyWith(dividerColor: Colors.transparent),
-          child: ExpansionTile(
-            title: Text(
-              house.name ?? (family.name ?? 'Unknown Family'),
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 16.sp,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            subtitle: Text(
-              family.name ?? '', // Show family name as subtitle context
-              style: TextStyle(color: AppTheme.textSecondary, fontSize: 12.sp),
-            ),
-            iconColor: AppTheme.primary,
-            collapsedIconColor: AppTheme.textSecondary,
-            children: (house.members ?? []).map<Widget>((member) {
-              return _buildMemberTile(member, family);
-            }).toList(),
-          ),
-        ),
-      );
-    } else if (hasMultipleHouses) {
-      // Multiple Houses: Family Name -> List of Houses -> Members
-      return Container(
-        margin: EdgeInsets.only(bottom: 16.h),
-        decoration: cardDecoration,
-        child: Theme(
-          data: Theme.of(
-            Get.context!,
-          ).copyWith(dividerColor: Colors.transparent),
-          child: ExpansionTile(
-            title: Text(
-              family.name ?? 'Unknown Family',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 16.sp,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            iconColor: AppTheme.primary,
-            collapsedIconColor: AppTheme.textSecondary,
-            children: family.houses!.map<Widget>((house) {
-              return ExpansionTile(
-                title: Text(
-                  house.name ?? 'Unknown House',
-                  style: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.9),
-                    fontSize: 15.sp,
-                  ),
-                ),
-                iconColor: AppTheme.primary,
-                collapsedIconColor: AppTheme.textSecondary,
-                children: (house.members ?? []).map<Widget>((member) {
-                  return _buildMemberTile(member, family);
-                }).toList(),
-              );
-            }).toList(),
-          ),
-        ),
-      );
-    } else {
-      // Fallback: No Houses (Just Members)
-      return Container(
-        margin: EdgeInsets.only(bottom: 16.h),
-        decoration: cardDecoration,
-        child: Theme(
-          data: Theme.of(
-            Get.context!,
-          ).copyWith(dividerColor: Colors.transparent),
-          child: ExpansionTile(
-            title: Text(
-              family.name ?? 'Unknown Family',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 16.sp,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            iconColor: AppTheme.primary,
-            collapsedIconColor: AppTheme.textSecondary,
-            children: (family.members ?? []).map<Widget>((member) {
-              return _buildMemberTile(member, family);
-            }).toList(),
-          ),
-        ),
+  Widget _buildFamilyCard(FamilyModel family) {
+    if (family.houses != null && family.houses!.isNotEmpty) {
+      return Column(
+        children: family.houses!.map((house) {
+          return _buildHouseholdItem(
+            members: house.members ?? [],
+            houseName: house.name,
+            familyName: family.name,
+          );
+        }).toList(),
       );
     }
+
+    return _buildHouseholdItem(
+      members: family.members ?? [],
+      houseName: family.houseName,
+      familyName: family.name,
+    );
   }
 
-  Widget _buildMemberTile(member, family) {
-    bool isHead = member.headOfFamily ?? false;
+  Widget _buildHouseholdItem({
+    required List<MemberModel> members,
+    String? houseName,
+    String? familyName,
+  }) {
+    if (members.isEmpty) return const SizedBox.shrink();
+
+    MemberModel? head;
+    try {
+      head = members.firstWhere((m) => m.headOfFamily == true);
+    } catch (_) {
+      if (members.isNotEmpty) head = members.first;
+    }
+
+    if (head == null) return const SizedBox.shrink();
+
+    final otherMembers = members.where((m) => m.id != head!.id).toList();
+
+    // Header Text Logic
+    final houseStr = houseName?.trim() ?? '';
+    final familyStr = familyName?.trim() ?? '';
+    String headerText = houseStr;
+    if (familyStr.isNotEmpty && familyStr != houseStr) {
+      if (headerText.isNotEmpty) headerText += ' • ';
+      headerText += familyStr;
+    }
+    if (headerText.isEmpty) headerText = 'Family';
 
     return Container(
-      padding: EdgeInsets.all(16.w),
+      margin: EdgeInsets.only(bottom: 16.h),
       decoration: BoxDecoration(
-        border: Border(
-          bottom: BorderSide(
-            color: AppTheme.background.withValues(alpha: 0.5),
-            width: 1,
+        color: AppTheme.surface,
+        borderRadius: BorderRadius.circular(12.r),
+        border: Border.all(color: AppTheme.surface, width: 1),
+      ),
+      child: Theme(
+        data: Theme.of(Get.context!).copyWith(dividerColor: Colors.transparent),
+        child: ExpansionTile(
+          tilePadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+          childrenPadding: EdgeInsets.zero,
+          trailing: otherMembers.isEmpty
+              ? const SizedBox.shrink()
+              : Icon(Icons.keyboard_arrow_down, color: AppTheme.primary),
+          title: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Top Label
+              Row(
+                children: [
+                  Icon(Icons.home, size: 12.sp, color: AppTheme.primary),
+                  SizedBox(width: 6.w),
+                  Expanded(
+                    child: Text(
+                      headerText,
+                      style: TextStyle(
+                        color: AppTheme.textSecondary,
+                        fontSize: 12.sp,
+                        fontWeight: FontWeight.w600,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ),
+              SizedBox(height: 12.h),
+              // Head Details
+              _buildHeadDetails(head),
+            ],
           ),
+          children: otherMembers.map((m) => _buildMemberTile(m)).toList(),
         ),
       ),
+    );
+  }
+
+  Widget _buildHeadDetails(MemberModel head) {
+    return Row(
+      children: [
+        Container(
+          width: 50.r,
+          height: 50.r,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(12.r),
+            image: head.profileImage != null
+                ? DecorationImage(
+                    image: NetworkImage(head.profileImage!),
+                    fit: BoxFit.cover,
+                  )
+                : null,
+            color: head.profileImage == null
+                ? AppTheme.primary.withValues(alpha: 0.2)
+                : null,
+          ),
+          child: head.profileImage == null
+              ? Center(
+                  child: Text(
+                    head.name?.substring(0, 1).toUpperCase() ?? '?',
+                    style: TextStyle(
+                      color: AppTheme.primary,
+                      fontSize: 20.sp,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                )
+              : null,
+        ),
+        SizedBox(width: 12.w),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                head.name ?? 'Unknown',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 16.sp,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              if (head.phone != null) ...[
+                SizedBox(height: 4.h),
+                Text(
+                  head.phone!,
+                  style: TextStyle(
+                    color: AppTheme.textSecondary,
+                    fontSize: 12.sp,
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+        if (head.phone != null && head.phone!.isNotEmpty)
+          _buildActionButton(Icons.phone, () async {
+            final Uri launchUri = Uri(
+              scheme: 'tel',
+              path: head.phone!,
+            );
+            if (await canLaunchUrl(launchUri)) {
+              await launchUrl(launchUri);
+            }
+          }),
+      ],
+    );
+  }
+
+  Widget _buildMemberTile(MemberModel member) {
+    return Container(
+      padding: EdgeInsets.fromLTRB(16.w, 4.h, 16.w, 16.h),
       child: Row(
         children: [
-          // Avatar
           Container(
-            width: 60.r,
-            height: 60.r,
+            width: 40.r,
+            height: 40.r,
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(16.r),
+              borderRadius: BorderRadius.circular(10.r),
               image: member.profileImage != null
                   ? DecorationImage(
                       image: NetworkImage(member.profileImage!),
@@ -275,15 +322,14 @@ class DirectoryView extends GetView<DirectoryController> {
                       member.name?.substring(0, 1).toUpperCase() ?? '?',
                       style: TextStyle(
                         color: AppTheme.primary,
-                        fontSize: 24.sp,
+                        fontSize: 16.sp,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
                   )
                 : null,
           ),
-          SizedBox(width: 16.w),
-          // Info
+          SizedBox(width: 12.w),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -292,70 +338,31 @@ class DirectoryView extends GetView<DirectoryController> {
                   member.name ?? 'Unknown',
                   style: TextStyle(
                     color: Colors.white,
-                    fontSize: 16.sp,
+                    fontSize: 14.sp,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                SizedBox(height: 4.h),
+                SizedBox(height: 2.h),
                 Text(
-                  family.name ?? 'Family', // "${family.name} Family"
+                  member.familyRole ?? 'Member',
                   style: TextStyle(
                     color: AppTheme.textSecondary,
-                    fontSize: 14.sp,
+                    fontSize: 12.sp,
                   ),
                 ),
-                if (member.phone != null) ...[
-                  SizedBox(height: 4.h),
-                  Text(
-                    member.phone!,
-                    style: TextStyle(
-                      color: AppTheme.textSecondary.withValues(alpha: 0.7),
-                      fontSize: 12.sp,
-                    ),
-                  ),
-                ],
               ],
             ),
           ),
-          // Actions
-          Row(
-            children: [
-              Container(
-                padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
-                decoration: BoxDecoration(
-                  color: isHead
-                      ? AppTheme.primary.withValues(alpha: 0.2)
-                      : AppTheme.surface,
-                  borderRadius: BorderRadius.circular(8.r),
-                  border: Border.all(
-                    color: isHead
-                        ? AppTheme.primary
-                        : AppTheme.textSecondary.withValues(alpha: 0.3),
-                  ),
-                ),
-                child: Text(
-                  isHead ? 'HEAD' : (member.familyRole ?? 'MEMBER'),
-                  style: TextStyle(
-                    color: isHead ? AppTheme.primary : AppTheme.textSecondary,
-                    fontSize: 10.sp,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-              if (member.phone != null && member.phone!.isNotEmpty) ...[
-                SizedBox(width: 8.w),
-                _buildActionButton(Icons.phone, () async {
-                  final Uri emailLaunchUri = Uri(
-                    scheme: 'tel',
-                    path: member.phone!,
-                  );
-                  if (await canLaunchUrl(emailLaunchUri)) {
-                    await launchUrl(emailLaunchUri);
-                  }
-                }),
-              ],
-            ],
-          ),
+          if (member.phone != null && member.phone!.isNotEmpty)
+            _buildActionButton(Icons.phone, () async {
+              final Uri launchUri = Uri(
+                scheme: 'tel',
+                path: member.phone!,
+              );
+              if (await canLaunchUrl(launchUri)) {
+                await launchUrl(launchUri);
+              }
+            }, isGhost: true),
         ],
       ),
     );
