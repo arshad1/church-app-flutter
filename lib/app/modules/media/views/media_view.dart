@@ -3,6 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/bottom_nav_bar.dart';
+import '../../../core/widgets/ui_kit.dart';
 import '../../../routes/app_pages.dart';
 import '../controllers/media_controller.dart';
 
@@ -13,28 +14,37 @@ class MediaView extends GetView<MediaController> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppTheme.background,
-      body: SafeArea(
-        child: Column(
-          children: [
-            Expanded(
-              child: SingleChildScrollView(
-                padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 24.h),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildHeader(),
-                    SizedBox(height: 24.h),
-                    _buildFilterTabs(),
-                    SizedBox(height: 24.h),
-                    // _buildSectionHeader('Albums'), // Optional: Header for the grid
-                    // SizedBox(height: 16.h),
-                    _buildRecentGrid(),
-                  ],
+      body: AppBackground(
+        child: SafeArea(
+          bottom: false,
+          child: Column(
+            children: [
+              Expanded(
+                child: RefreshIndicator(
+                  color: AppTheme.primary,
+                  backgroundColor: AppTheme.surface,
+                  onRefresh: controller.fetchGalleryContent,
+                  child: SingleChildScrollView(
+                    physics: const AlwaysScrollableScrollPhysics(
+                      parent: BouncingScrollPhysics(),
+                    ),
+                    padding: EdgeInsets.fromLTRB(20.w, 16.h, 20.w, 24.h),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        FadeSlideIn(child: _buildHeader()),
+                        SizedBox(height: 18.h),
+                        FadeSlideIn(index: 1, child: _buildFilterTabs()),
+                        SizedBox(height: 20.h),
+                        _buildRecentGrid(),
+                      ],
+                    ),
+                  ),
                 ),
               ),
-            ),
-            const AppBottomNavBar(currentRoute: Routes.media),
-          ],
+              const AppBottomNavBar(currentRoute: Routes.media),
+            ],
+          ),
         ),
       ),
     );
@@ -42,16 +52,32 @@ class MediaView extends GetView<MediaController> {
 
   Widget _buildHeader() {
     return Row(
-      mainAxisAlignment: MainAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.end,
       children: [
-        Text(
-          'Media Gallery',
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 24.sp,
-            fontWeight: FontWeight.bold,
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Media Gallery', style: AppTheme.heading(fontSize: 30.sp)),
+              SizedBox(height: 4.h),
+              Text(
+                'Moments from our church family',
+                style: AppTheme.body(
+                  fontSize: 13.sp,
+                  color: AppTheme.textSecondary,
+                ),
+              ),
+            ],
           ),
         ),
+        Obx(() {
+          final total = controller.getCategoryPhotoCount('All');
+          if (total == 0) return const SizedBox.shrink();
+          return PillLabel(
+            text: '$total PHOTOS',
+            icon: Icons.photo_camera_outlined,
+          );
+        }),
       ],
     );
   }
@@ -63,60 +89,79 @@ class MediaView extends GetView<MediaController> {
         filters.addAll(controller.categories.map((c) => c.title));
       }
 
-      return Container(
-        height: 40.h,
-        width: double.infinity,
-        decoration: BoxDecoration(
-          border: Border(
-            bottom: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
-          ),
-        ),
+      return SizedBox(
+        height: 42.h,
         child: ListView.separated(
           scrollDirection: Axis.horizontal,
-          padding: EdgeInsets.symmetric(horizontal: 4.w),
+          physics: const BouncingScrollPhysics(),
           itemCount: filters.length,
-          separatorBuilder: (context, index) => SizedBox(width: 24.w),
+          separatorBuilder: (context, index) => SizedBox(width: 10.w),
           itemBuilder: (context, index) {
             final filter = filters[index];
             return Obx(() {
               final isSelected = controller.selectedFilter.value == filter;
               final photoCount = controller.getCategoryPhotoCount(filter);
+              final label = filter == 'All' ? 'All Albums' : filter;
 
-              // Build display text with count
-              String displayText = filter;
-              if (filter == 'All') {
-                displayText = 'All Albums';
-              }
-              if (photoCount > 0 && filter != 'All') {
-                displayText = '$filter $photoCount';
-              }
-
-              return GestureDetector(
+              return PressableScale(
                 onTap: () => controller.selectedFilter.value = filter,
-                child: Container(
-                  padding: EdgeInsets.symmetric(vertical: 8.h),
-                  decoration: BoxDecoration(
-                    border: isSelected
-                        ? Border(
-                            bottom: BorderSide(
-                              color: AppTheme.primary,
-                              width: 2.h,
-                            ),
-                          )
-                        : null,
-                  ),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 300),
+                  curve: Curves.easeOutCubic,
+                  padding: EdgeInsets.symmetric(horizontal: 16.w),
                   alignment: Alignment.center,
-                  child: Text(
-                    displayText,
-                    style: TextStyle(
+                  decoration: BoxDecoration(
+                    gradient: isSelected ? AppTheme.primaryGradient : null,
+                    color: isSelected ? null : AppTheme.glass,
+                    borderRadius: BorderRadius.circular(30.r),
+                    border: Border.all(
                       color: isSelected
-                          ? AppTheme.primary
-                          : AppTheme.textSecondary,
-                      fontSize: 16.sp,
-                      fontWeight: isSelected
-                          ? FontWeight.bold
-                          : FontWeight.normal,
+                          ? Colors.transparent
+                          : AppTheme.glassBorder,
                     ),
+                    boxShadow: isSelected ? AppTheme.glow() : null,
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        label,
+                        style: AppTheme.body(
+                          fontSize: 13.sp,
+                          fontWeight: isSelected
+                              ? FontWeight.w700
+                              : FontWeight.w500,
+                          color: isSelected
+                              ? Colors.white
+                              : AppTheme.textSecondary,
+                        ),
+                      ),
+                      if (photoCount > 0 && filter != 'All') ...[
+                        SizedBox(width: 6.w),
+                        Container(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 7.w,
+                            vertical: 2.h,
+                          ),
+                          decoration: BoxDecoration(
+                            color: isSelected
+                                ? Colors.white.withValues(alpha: 0.25)
+                                : AppTheme.accent.withValues(alpha: 0.15),
+                            borderRadius: BorderRadius.circular(10.r),
+                          ),
+                          child: Text(
+                            '$photoCount',
+                            style: AppTheme.body(
+                              fontSize: 10.sp,
+                              fontWeight: FontWeight.w700,
+                              color: isSelected
+                                  ? Colors.white
+                                  : AppTheme.accent,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
                   ),
                 ),
               );
@@ -130,14 +175,15 @@ class MediaView extends GetView<MediaController> {
   Widget _buildRecentGrid() {
     return Obx(() {
       if (controller.isLoading.value) {
-        return const Center(child: CircularProgressIndicator());
+        return const AppLoader();
       }
 
       final albums = controller.filteredAlbums;
 
       if (albums.isEmpty) {
-        return const Center(
-          child: Text("No albums found", style: TextStyle(color: Colors.white)),
+        return const EmptyState(
+          icon: Icons.photo_album_outlined,
+          message: 'No albums found',
         );
       }
 
@@ -146,87 +192,105 @@ class MediaView extends GetView<MediaController> {
         physics: const NeverScrollableScrollPhysics(),
         gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
           crossAxisCount: 2,
-          crossAxisSpacing: 16.w,
-          mainAxisSpacing: 16.h,
-          childAspectRatio: 0.75,
+          crossAxisSpacing: 14.w,
+          mainAxisSpacing: 14.h,
+          childAspectRatio: 0.72,
         ),
         itemCount: albums.length,
         itemBuilder: (context, index) {
           final item = albums[index];
-          return GestureDetector(
-            onTap: () {
-              Get.toNamed(
-                Routes.albumDetail,
-                arguments: {'id': item.id, 'title': item.title},
-              );
-            },
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  child: Stack(
+          return FadeSlideIn(
+            key: ValueKey('${controller.selectedFilter.value}-${item.id}'),
+            index: index,
+            child: PressableScale(
+              onTap: () {
+                Get.toNamed(
+                  Routes.albumDetail,
+                  arguments: {'id': item.id, 'title': item.title},
+                );
+              },
+              child: Container(
+                decoration: BoxDecoration(
+                  color: AppTheme.surface,
+                  borderRadius: BorderRadius.circular(22.r),
+                  border: Border.all(color: AppTheme.glassBorder),
+                  image: item.coverImage != null
+                      ? DecorationImage(
+                          image: NetworkImage(item.coverImage!),
+                          fit: BoxFit.cover,
+                          onError: (e, s) {},
+                        )
+                      : null,
+                ),
+                child: Container(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(22.r),
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        Colors.transparent,
+                        AppTheme.background.withValues(alpha: 0.95),
+                      ],
+                      stops: const [0.4, 1],
+                    ),
+                  ),
+                  padding: EdgeInsets.all(12.w),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Container(
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(16.r),
-                          image: DecorationImage(
-                            image: NetworkImage(
-                              item.coverImage ??
-                                  'https://via.placeholder.com/300',
-                            ),
-                            fit: BoxFit.cover,
-                            onError: (e, s) => const AssetImage(
-                              'assets/images/placeholder.png',
-                            ),
-                          ),
-                        ),
-                      ),
-                      if (item.itemCount != null)
-                        Positioned(
-                          right: 8.w,
-                          bottom: 8.h,
-                          child: Container(
-                            padding: EdgeInsets.symmetric(
-                              horizontal: 8.w,
-                              vertical: 4.h,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Colors.black.withValues(alpha: 0.6),
-                              borderRadius: BorderRadius.circular(12.r),
-                            ),
-                            child: Text(
-                              '${item.itemCount} Photos',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 10.sp,
-                                fontWeight: FontWeight.w500,
+                      if (item.coverImage == null)
+                        Expanded(
+                          child: Center(
+                            child: GradientMask(
+                              child: Icon(
+                                Icons.photo_library_outlined,
+                                size: 40.sp,
                               ),
                             ),
                           ),
+                        )
+                      else
+                        const Spacer(),
+                      if (item.itemCount != null)
+                        Container(
+                          margin: EdgeInsets.only(bottom: 8.h),
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 8.w,
+                            vertical: 3.h,
+                          ),
+                          decoration: BoxDecoration(
+                            gradient: AppTheme.primaryGradient,
+                            borderRadius: BorderRadius.circular(12.r),
+                          ),
+                          child: Text(
+                            '${item.itemCount} Photos',
+                            style: AppTheme.body(
+                              fontSize: 10.sp,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
                         ),
+                      Text(
+                        item.title,
+                        style: AppTheme.heading(fontSize: 15.sp),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      SizedBox(height: 3.h),
+                      Text(
+                        item.date,
+                        style: AppTheme.body(
+                          color: AppTheme.textSecondary,
+                          fontSize: 11.sp,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ],
                   ),
                 ),
-                SizedBox(height: 8.h),
-                Text(
-                  item.title,
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 14.sp,
-                    fontWeight: FontWeight.bold,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                SizedBox(height: 4.h),
-                Text(
-                  item.date,
-                  style: TextStyle(
-                    color: AppTheme.textSecondary,
-                    fontSize: 12.sp,
-                  ),
-                ),
-              ],
+              ),
             ),
           );
         },

@@ -47,7 +47,9 @@ void main() async {
           getPages: AppPages.routes,
           theme: AppTheme.light,
           darkTheme: AppTheme.dark,
-          themeMode: ThemeMode.system,
+          themeMode: ThemeMode.dark,
+          defaultTransition: Transition.fadeIn,
+          transitionDuration: const Duration(milliseconds: 350),
           debugShowCheckedModeBanner: false,
         );
       },

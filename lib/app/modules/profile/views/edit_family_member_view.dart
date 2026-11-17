@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/ui_kit.dart';
 import '../../../data/models/member_model.dart';
 import '../../../core/utils/image_helper.dart';
 import '../controllers/profile_controller.dart';
@@ -48,22 +49,17 @@ class _EditFamilyMemberViewState extends State<EditFamilyMemberView> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppTheme.background,
-      appBar: AppBar(
-        backgroundColor: AppTheme.background,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: () => Get.back(),
-        ),
-        title: const Text(
-          'Edit Family Member',
-          style: TextStyle(color: Colors.white),
-        ),
-        centerTitle: true,
+      appBar: glassAppBar(
+        'Edit Family Member',
+        onBack: () => Get.back(),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.delete, color: Colors.red),
-            onPressed: () {
+          Padding(
+            padding: const EdgeInsets.only(right: 12),
+            child: GlassIconButton(
+              icon: Icons.delete_outline_rounded,
+              size: 40,
+              iconColor: AppTheme.live,
+              onTap: () {
               Get.defaultDialog(
                 title: 'Delete Member',
                 middleText:
@@ -71,7 +67,7 @@ class _EditFamilyMemberViewState extends State<EditFamilyMemberView> {
                 textConfirm: 'Delete',
                 textCancel: 'Cancel',
                 confirmTextColor: Colors.white,
-                buttonColor: Colors.red,
+                buttonColor: AppTheme.live,
                 onConfirm: () {
                   Get.back(); // Close dialog
                   _controller.deleteFamilyMember(widget.member.id!);
@@ -79,10 +75,14 @@ class _EditFamilyMemberViewState extends State<EditFamilyMemberView> {
                 },
               );
             },
+            ),
           ),
         ],
       ),
-      body: SingleChildScrollView(
+      body: AppBackground(
+        child: SafeArea(
+          top: false,
+          child: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
         child: Form(
           key: _formKey,
@@ -93,9 +93,11 @@ class _EditFamilyMemberViewState extends State<EditFamilyMemberView> {
                 child: Stack(
                   children: [
                     Container(
+                      padding: const EdgeInsets.all(3),
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        border: Border.all(color: AppTheme.surface, width: 4),
+                        gradient: AppTheme.primaryGradient,
+                        boxShadow: AppTheme.glow(AppTheme.secondary, 0.35),
                       ),
                       child: CircleAvatar(
                         radius: 50,
@@ -124,12 +126,13 @@ class _EditFamilyMemberViewState extends State<EditFamilyMemberView> {
                       bottom: 0,
                       child: Container(
                         padding: const EdgeInsets.all(8),
-                        decoration: const BoxDecoration(
-                          color: AppTheme.primary,
+                        decoration: BoxDecoration(
+                          gradient: AppTheme.primaryGradient,
                           shape: BoxShape.circle,
+                          border: Border.all(color: AppTheme.background, width: 3),
                         ),
                         child: const Icon(
-                          Icons.camera_alt,
+                          Icons.photo_camera_rounded,
                           color: Colors.white,
                           size: 18,
                         ),
@@ -180,13 +183,10 @@ class _EditFamilyMemberViewState extends State<EditFamilyMemberView> {
                 const SizedBox(height: 32),
               ],
               Obx(
-                () => SizedBox(
-                  width: double.infinity,
-                  height: 50,
-                  child: ElevatedButton(
-                    onPressed: _controller.isLoading.value
-                        ? null
-                        : () {
+                () => GradientButton(
+                  label: 'Save Changes',
+                  isLoading: _controller.isLoading.value,
+                  onPressed: () {
                             if (_formKey.currentState!.validate()) {
                               // Controller needs a method to update family member similar to updateProfile
                               // For now I'll need to add updateFamilyMember method to controller that accepts ID
@@ -199,27 +199,12 @@ class _EditFamilyMemberViewState extends State<EditFamilyMemberView> {
                               );
                             }
                           },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppTheme.primary,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                    child: _controller.isLoading.value
-                        ? const CircularProgressIndicator(color: Colors.white)
-                        : const Text(
-                            'Save Changes',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
-                            ),
-                          ),
-                  ),
                 ),
               ),
             ],
           ),
+        ),
+      ),
         ),
       ),
     );
@@ -234,28 +219,10 @@ class _EditFamilyMemberViewState extends State<EditFamilyMemberView> {
   }) {
     return TextFormField(
       controller: controller,
-      style: const TextStyle(color: Colors.white),
+      style: AppTheme.body(fontSize: 15),
       keyboardType: keyboardType,
       validator: validator,
-      decoration: InputDecoration(
-        labelText: label,
-        labelStyle: const TextStyle(color: AppTheme.textSecondary),
-        prefixIcon: Icon(icon, color: AppTheme.textSecondary),
-        filled: true,
-        fillColor: AppTheme.surface,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide.none,
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide.none,
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: AppTheme.primary),
-        ),
-      ),
+      decoration: AppTheme.inputDecoration(label: label, icon: icon),
     );
   }
 
@@ -270,18 +237,8 @@ class _EditFamilyMemberViewState extends State<EditFamilyMemberView> {
       // ignore: deprecated_member_use
       value: value,
       dropdownColor: AppTheme.surface,
-      style: const TextStyle(color: Colors.white),
-      decoration: InputDecoration(
-        labelText: label,
-        labelStyle: const TextStyle(color: AppTheme.textSecondary),
-        prefixIcon: Icon(icon, color: AppTheme.textSecondary),
-        filled: true,
-        fillColor: AppTheme.surface,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide.none,
-        ),
-      ),
+      style: AppTheme.body(fontSize: 15),
+      decoration: AppTheme.inputDecoration(label: label, icon: icon),
       items: items,
       onChanged: onChanged,
     );

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/ui_kit.dart';
 import '../../../core/utils/image_helper.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
@@ -47,33 +48,23 @@ class _AddFamilyMemberViewState extends State<AddFamilyMemberView> {
 
     return Scaffold(
       backgroundColor: AppTheme.background,
-      appBar: AppBar(
-        backgroundColor: AppTheme.background,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: () => Get.back(),
-        ),
-        title: const Text(
-          'Add Family Member',
-          style: TextStyle(color: Colors.white),
-        ),
-        centerTitle: true,
+      appBar: glassAppBar(
+        'Add Family Member',
+        onBack: () => Get.back(),
       ),
-      body: SingleChildScrollView(
+      body: AppBackground(
+        child: SafeArea(
+          top: false,
+          child: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
         child: Form(
           key: _formKey,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
+              Text(
                 'New Member Details',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: AppTheme.heading(fontSize: 22),
               ),
               const SizedBox(height: 24),
               Center(
@@ -82,9 +73,11 @@ class _AddFamilyMemberViewState extends State<AddFamilyMemberView> {
                   child: Stack(
                     children: [
                       Container(
+                        padding: const EdgeInsets.all(3),
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          border: Border.all(color: AppTheme.surface, width: 4),
+                          gradient: AppTheme.primaryGradient,
+                          boxShadow: AppTheme.glow(AppTheme.secondary, 0.35),
                         ),
                         child: CircleAvatar(
                           radius: 50,
@@ -93,10 +86,8 @@ class _AddFamilyMemberViewState extends State<AddFamilyMemberView> {
                               ? FileImage(_selectedImage!)
                               : null,
                           child: _selectedImage == null
-                              ? const Icon(
-                                  Icons.person,
-                                  size: 50,
-                                  color: Colors.grey,
+                              ? const GradientMask(
+                                  child: Icon(Icons.person_rounded, size: 54),
                                 )
                               : null,
                         ),
@@ -106,12 +97,13 @@ class _AddFamilyMemberViewState extends State<AddFamilyMemberView> {
                         bottom: 0,
                         child: Container(
                           padding: const EdgeInsets.all(8),
-                          decoration: const BoxDecoration(
-                            color: AppTheme.primary,
+                          decoration: BoxDecoration(
+                            gradient: AppTheme.primaryGradient,
                             shape: BoxShape.circle,
+                            border: Border.all(color: AppTheme.background, width: 3),
                           ),
                           child: const Icon(
-                            Icons.camera_alt,
+                            Icons.photo_camera_rounded,
                             color: Colors.white,
                             size: 18,
                           ),
@@ -253,13 +245,10 @@ class _AddFamilyMemberViewState extends State<AddFamilyMemberView> {
               ],
               const SizedBox(height: 32),
               Obx(
-                () => SizedBox(
-                  width: double.infinity,
-                  height: 50,
-                  child: ElevatedButton(
-                    onPressed: controller.isLoading.value
-                        ? null
-                        : () {
+                () => GradientButton(
+                  label: 'Add Member',
+                  isLoading: controller.isLoading.value,
+                  onPressed: () {
                             if (_formKey.currentState!.validate()) {
                               if (_selectedRole == null) {
                                 Get.snackbar(
@@ -293,27 +282,12 @@ class _AddFamilyMemberViewState extends State<AddFamilyMemberView> {
                               controller.addFamilyMember(data, _selectedImage);
                             }
                           },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppTheme.primary,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                    child: controller.isLoading.value
-                        ? const CircularProgressIndicator(color: Colors.white)
-                        : const Text(
-                            'Add Member',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
-                            ),
-                          ),
-                  ),
                 ),
               ),
             ],
           ),
+        ),
+      ),
         ),
       ),
     );
@@ -328,30 +302,12 @@ class _AddFamilyMemberViewState extends State<AddFamilyMemberView> {
   }) {
     return TextFormField(
       controller: controller,
-      style: const TextStyle(color: Colors.white),
+      style: AppTheme.body(fontSize: 15),
       keyboardType: keyboardType,
       validator:
           validator ??
           (v) => v == null || v.isEmpty ? 'This field is required' : null,
-      decoration: InputDecoration(
-        labelText: label,
-        labelStyle: const TextStyle(color: AppTheme.textSecondary),
-        prefixIcon: Icon(icon, color: AppTheme.textSecondary),
-        filled: true,
-        fillColor: AppTheme.surface,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide.none,
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide.none,
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: AppTheme.primary),
-        ),
-      ),
+      decoration: AppTheme.inputDecoration(label: label, icon: icon),
     );
   }
 
@@ -366,18 +322,8 @@ class _AddFamilyMemberViewState extends State<AddFamilyMemberView> {
       // ignore: deprecated_member_use
       value: value,
       dropdownColor: AppTheme.surface,
-      style: const TextStyle(color: Colors.white),
-      decoration: InputDecoration(
-        labelText: label,
-        labelStyle: const TextStyle(color: AppTheme.textSecondary),
-        prefixIcon: Icon(icon, color: AppTheme.textSecondary),
-        filled: true,
-        fillColor: AppTheme.surface,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide.none,
-        ),
-      ),
+      style: AppTheme.body(fontSize: 15),
+      decoration: AppTheme.inputDecoration(label: label, icon: icon),
       items: items,
       onChanged: onChanged,
     );
@@ -393,15 +339,16 @@ class _AddFamilyMemberViewState extends State<AddFamilyMemberView> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
         decoration: BoxDecoration(
-          color: AppTheme.surface,
-          borderRadius: BorderRadius.circular(12),
+          color: AppTheme.glass,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: AppTheme.glassBorder),
         ),
         child: Row(
           children: [
             const Icon(
-              Icons.calendar_today,
-              color: AppTheme.textSecondary,
-              size: 24,
+              Icons.calendar_today_rounded,
+              color: AppTheme.accent,
+              size: 20,
             ),
             const SizedBox(width: 12),
             Column(

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/ui_kit.dart';
 import '../../../../app/data/models/notification_model.dart';
 import '../controllers/notification_controller.dart';
 import 'package:intl/intl.dart';
@@ -15,170 +16,159 @@ class NotificationView extends GetView<NotificationController> {
 
     return Scaffold(
       backgroundColor: AppTheme.background,
-      appBar: AppBar(
-        title: const Text(
-          'Notifications',
-          style: TextStyle(color: Colors.white),
-        ),
-        backgroundColor: AppTheme.background,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: () => Get.back(),
+      extendBodyBehindAppBar: true,
+      appBar: glassAppBar('Notifications', onBack: () => Get.back()),
+      body: AppBackground(
+        child: SafeArea(
+          child: Obx(() {
+            if (controller.isLoading.value) {
+              return const AppLoader();
+            }
+
+            if (controller.notifications.isEmpty) {
+              return const EmptyState(
+                icon: Icons.notifications_off_outlined,
+                message: 'No notifications yet\nWe\'ll let you know when '
+                    'something new happens.',
+              );
+            }
+
+            return RefreshIndicator(
+              onRefresh: controller.onRefresh,
+              color: AppTheme.primary,
+              backgroundColor: AppTheme.surface,
+              child: ListView.separated(
+                controller: controller.scrollController,
+                physics: const AlwaysScrollableScrollPhysics(
+                  parent: BouncingScrollPhysics(),
+                ),
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+                itemCount:
+                    controller.notifications.length +
+                    (controller.isLoadingMore.value ? 1 : 0),
+                separatorBuilder: (context, index) =>
+                    const SizedBox(height: 12),
+                itemBuilder: (context, index) {
+                  if (index == controller.notifications.length) {
+                    return const AppLoader();
+                  }
+                  final notification = controller.notifications[index];
+                  return FadeSlideIn(
+                    index: index % 10,
+                    child: _buildNotificationItem(notification),
+                  );
+                },
+              ),
+            );
+          }),
         ),
       ),
-      body: Obx(() {
-        if (controller.isLoading.value) {
-          return const Center(
-            child: CircularProgressIndicator(color: AppTheme.primary),
-          );
-        }
-
-        if (controller.notifications.isEmpty) {
-          return Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  Icons.notifications_off_outlined,
-                  size: 64,
-                  color: AppTheme.textSecondary.withValues(alpha: 0.5),
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  'No notifications yet',
-                  style: TextStyle(
-                    color: AppTheme.textSecondary.withValues(alpha: 0.7),
-                    fontSize: 16,
-                  ),
-                ),
-              ],
-            ),
-          );
-        }
-
-        return RefreshIndicator(
-          onRefresh: controller.onRefresh,
-          color: AppTheme.primary,
-          backgroundColor: AppTheme.surface,
-          child: ListView.separated(
-            controller: controller.scrollController,
-            padding: const EdgeInsets.all(16),
-            itemCount:
-                controller.notifications.length +
-                (controller.isLoadingMore.value ? 1 : 0),
-            separatorBuilder: (context, index) => const SizedBox(height: 12),
-            itemBuilder: (context, index) {
-              if (index == controller.notifications.length) {
-                return const Center(
-                  child: Padding(
-                    padding: EdgeInsets.all(16.0),
-                    child: CircularProgressIndicator(
-                      color: AppTheme.primary,
-                      strokeWidth: 2,
-                    ),
-                  ),
-                );
-              }
-              final notification = controller.notifications[index];
-              return _buildNotificationItem(notification);
-            },
-          ),
-        );
-      }),
     );
   }
 
   Widget _buildNotificationItem(NotificationModel notification) {
     final isAnnouncement = notification.type == NotificationType.announcement;
-    final isRead =
-        notification.isRead ==
-        true; // Announcements are always "read" visually or handled differently
+    final isRead = notification.isRead == true;
+    final highlight = !isRead && !isAnnouncement;
 
-    return GestureDetector(
+    return GlassCard(
       onTap: () => controller.markAsRead(notification),
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: isRead
-              ? AppTheme.surface
-              : AppTheme.surface.withValues(alpha: 0.7),
-          borderRadius: BorderRadius.circular(12),
-          border: isRead
-              ? null
-              : Border.all(color: AppTheme.primary.withValues(alpha: 0.3)),
-          // Highlight unread with a subtle border or background tint
-        ),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: isAnnouncement
-                    ? Colors.orange.withValues(alpha: 0.1)
-                    : AppTheme.primary.withValues(alpha: 0.1),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                isAnnouncement ? Icons.campaign : Icons.notifications,
-                color: isAnnouncement ? Colors.orange : AppTheme.primary,
-                size: 20,
-              ),
+      padding: const EdgeInsets.all(14),
+      borderColor: highlight
+          ? AppTheme.primary.withValues(alpha: 0.55)
+          : null,
+      gradient: highlight
+          ? LinearGradient(
+              colors: [
+                AppTheme.secondary.withValues(alpha: 0.14),
+                Colors.white.withValues(alpha: 0.05),
+              ],
+            )
+          : null,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              gradient: isAnnouncement
+                  ? const LinearGradient(
+                      colors: [AppTheme.accent, Color(0xFFFF8E5B)],
+                    )
+                  : AppTheme.primaryGradient,
+              borderRadius: BorderRadius.circular(14),
             ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Expanded(
-                        child: Text(
-                          notification.title ?? 'No Title',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontWeight: isRead
-                                ? FontWeight.w500
-                                : FontWeight.bold,
-                            fontSize: 16,
-                          ),
+            child: Icon(
+              isAnnouncement
+                  ? Icons.campaign_rounded
+                  : Icons.notifications_rounded,
+              color: Colors.white,
+              size: 22,
+            ),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        notification.title ?? 'No Title',
+                        style: AppTheme.body(
+                          fontWeight: isRead
+                              ? FontWeight.w500
+                              : FontWeight.w700,
+                          fontSize: 15,
                         ),
                       ),
-                      if (!isRead && !isAnnouncement)
-                        Container(
-                          width: 8,
-                          height: 8,
-                          decoration: const BoxDecoration(
-                            color: AppTheme.primary,
-                            shape: BoxShape.circle,
-                          ),
+                    ),
+                    if (highlight)
+                      const Padding(
+                        padding: EdgeInsets.only(left: 8),
+                        child: PulsingDot(size: 8, color: AppTheme.primary),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  notification.body ?? '',
+                  style: AppTheme.body(
+                    color: AppTheme.textSecondary,
+                    fontSize: 13.5,
+                    height: 1.45,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    if (isAnnouncement) ...[
+                      Text(
+                        'ANNOUNCEMENT',
+                        style: AppTheme.body(
+                          fontSize: 9.5,
+                          fontWeight: FontWeight.w700,
+                          color: AppTheme.accent,
+                          letterSpacing: 1,
                         ),
+                      ),
+                      const SizedBox(width: 8),
                     ],
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    notification.body ?? '',
-                    style: const TextStyle(
-                      color: AppTheme.textSecondary,
-                      fontSize: 14,
-                      height: 1.4,
+                    Text(
+                      _formatDate(notification.date),
+                      style: AppTheme.body(
+                        color: AppTheme.textMuted,
+                        fontSize: 12,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    _formatDate(notification.date),
-                    style: TextStyle(
-                      color: AppTheme.textSecondary.withValues(alpha: 0.5),
-                      fontSize: 12,
-                    ),
-                  ),
-                ],
-              ),
+                  ],
+                ),
+              ],
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

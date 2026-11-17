@@ -5,59 +5,84 @@ import 'package:get/get.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:intl/intl.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/ui_kit.dart';
+import '../../../data/models/event.dart';
 import '../../../routes/app_pages.dart';
 import '../controllers/events_controller.dart';
 
 class EventsView extends GetView<EventsController> {
   const EventsView({super.key});
 
+  static const _filters = <(String, IconData)>[
+    ('All Events', Icons.apps_rounded),
+    ('Live & Streamed', Icons.live_tv_rounded),
+    ('Featured', Icons.star_rounded),
+  ];
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppTheme.background,
-      body: SafeArea(
-        child: Column(
-          children: [
-            Expanded(
-              child: SingleChildScrollView(
-                padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 24.h),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildHeader(),
-                    SizedBox(height: 24.h),
-                    _buildSearchBar(),
-                    SizedBox(height: 24.h),
-                    _buildFilterChips(),
-                    SizedBox(height: 32.h),
-                    _buildSectionHeader('Featured'),
-                    SizedBox(height: 16.h),
-                    _buildFeaturedCard(),
-                    SizedBox(height: 32.h),
-                    _buildSectionHeader('Upcoming'),
-                    SizedBox(height: 16.h),
-                    _buildUpcomingEventsList(),
-                  ],
+      body: AppBackground(
+        child: SafeArea(
+          bottom: false,
+          child: Column(
+            children: [
+              Expanded(
+                child: RefreshIndicator(
+                  color: AppTheme.primary,
+                  backgroundColor: AppTheme.surface,
+                  onRefresh: controller.fetchEvents,
+                  child: SingleChildScrollView(
+                    physics: const AlwaysScrollableScrollPhysics(
+                      parent: BouncingScrollPhysics(),
+                    ),
+                    keyboardDismissBehavior:
+                        ScrollViewKeyboardDismissBehavior.onDrag,
+                    padding: EdgeInsets.fromLTRB(20.w, 16.h, 20.w, 24.h),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        FadeSlideIn(child: _buildHeader()),
+                        SizedBox(height: 18.h),
+                        FadeSlideIn(index: 1, child: _buildSearchBar()),
+                        SizedBox(height: 14.h),
+                        FadeSlideIn(index: 2, child: _buildFilterChips()),
+                        SizedBox(height: 22.h),
+                        FadeSlideIn(index: 3, child: _buildFeaturedCard()),
+                        Obx(
+                          () => SectionHeader(
+                            title: controller.isSearching
+                                ? 'Results'
+                                : 'Upcoming',
+                          ),
+                        ),
+                        SizedBox(height: 14.h),
+                        _buildUpcomingEventsList(),
+                      ],
+                    ),
+                  ),
                 ),
               ),
-            ),
-            const AppBottomNavBar(currentRoute: Routes.events),
-          ],
+              const AppBottomNavBar(currentRoute: Routes.events),
+            ],
+          ),
         ),
       ),
     );
   }
 
   Widget _buildHeader() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.start,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        Text('Events', style: AppTheme.heading(fontSize: 30.sp)),
+        SizedBox(height: 4.h),
         Text(
-          'Events',
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 24.sp,
-            fontWeight: FontWeight.bold,
+          'Gather, worship and serve together',
+          style: AppTheme.body(
+            fontSize: 13.sp,
+            color: AppTheme.textSecondary,
           ),
         ),
       ],
@@ -65,52 +90,88 @@ class EventsView extends GetView<EventsController> {
   }
 
   Widget _buildSearchBar() {
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
-      decoration: BoxDecoration(
-        color: AppTheme.surface,
-        borderRadius: BorderRadius.circular(12.r),
-      ),
-      child: Row(
-        children: [
-          Icon(Icons.search, color: AppTheme.textSecondary, size: 20.sp),
-          SizedBox(width: 12.w),
-          Expanded(
-            child: Text(
-              'Search events...',
-              style: TextStyle(color: AppTheme.textSecondary, fontSize: 14.sp),
-            ),
-          ),
-        ],
+    return Obx(
+      () => TextField(
+        onChanged: (value) => controller.searchQuery.value = value,
+        style: AppTheme.body(fontSize: 14.sp),
+        cursorColor: AppTheme.primary,
+        textInputAction: TextInputAction.search,
+        decoration: AppTheme.inputDecoration(
+          hint: 'Search events, places…',
+          icon: Icons.search_rounded,
+          suffix: controller.isSearching
+              ? IconButton(
+                  icon: const Icon(
+                    Icons.close_rounded,
+                    color: AppTheme.textSecondary,
+                  ),
+                  onPressed: () {
+                    controller.clearSearch();
+                    FocusManager.instance.primaryFocus?.unfocus();
+                  },
+                )
+              : null,
+        ),
+        controller: controller.searchController,
       ),
     );
   }
 
   Widget _buildFilterChips() {
-    final filters = ['All Events', 'Live & Streamed', 'Featured'];
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
+      physics: const BouncingScrollPhysics(),
       child: Row(
-        children: filters.map((filter) {
+        children: _filters.map((f) {
+          final (filter, icon) = f;
           return Obx(() {
             final isSelected = controller.selectedFilter.value == filter;
-            return GestureDetector(
-              onTap: () => controller.selectedFilter.value = filter,
-              child: Container(
-                margin: EdgeInsets.only(right: 12.w),
-                padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 10.h),
-                decoration: BoxDecoration(
-                  color: isSelected ? AppTheme.primary : AppTheme.surface,
-                  borderRadius: BorderRadius.circular(24.r),
-                ),
-                child: Text(
-                  filter,
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 14.sp,
-                    fontWeight: isSelected
-                        ? FontWeight.w600
-                        : FontWeight.normal,
+            return Padding(
+              padding: EdgeInsets.only(right: 10.w),
+              child: PressableScale(
+                onTap: () => controller.selectedFilter.value = filter,
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 300),
+                  curve: Curves.easeOutCubic,
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 16.w,
+                    vertical: 10.h,
+                  ),
+                  decoration: BoxDecoration(
+                    gradient: isSelected ? AppTheme.primaryGradient : null,
+                    color: isSelected ? null : AppTheme.glass,
+                    borderRadius: BorderRadius.circular(30.r),
+                    border: Border.all(
+                      color: isSelected
+                          ? Colors.transparent
+                          : AppTheme.glassBorder,
+                    ),
+                    boxShadow: isSelected ? AppTheme.glow() : null,
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        icon,
+                        size: 15.sp,
+                        color: isSelected
+                            ? Colors.white
+                            : AppTheme.textSecondary,
+                      ),
+                      SizedBox(width: 6.w),
+                      Text(
+                        filter,
+                        style: AppTheme.body(
+                          fontSize: 13.sp,
+                          fontWeight: isSelected
+                              ? FontWeight.w700
+                              : FontWeight.w500,
+                          color: isSelected
+                              ? Colors.white
+                              : AppTheme.textSecondary,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ),
@@ -121,22 +182,13 @@ class EventsView extends GetView<EventsController> {
     );
   }
 
-  Widget _buildSectionHeader(String title) {
-    return Text(
-      title,
-      style: TextStyle(
-        color: Colors.white,
-        fontSize: 18.sp,
-        fontWeight: FontWeight.bold,
-      ),
-    );
-  }
-
   Widget _buildFeaturedCard() {
     return Obx(() {
       final featuredEvent = controller.featuredEvent;
 
-      if (featuredEvent == null) {
+      if (featuredEvent == null ||
+          controller.isSearching ||
+          controller.selectedFilter.value != 'All Events') {
         return const SizedBox.shrink();
       }
 
@@ -145,120 +197,62 @@ class EventsView extends GetView<EventsController> {
           featuredEvent.liveUrl != null &&
           featuredEvent.liveUrl!.isNotEmpty;
 
-      return GestureDetector(
-        onTap: () => _showEventDetails(featuredEvent),
-        child: Container(
-          width: double.infinity,
-          height: 200.h,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(24.r),
-            color: AppTheme.surface,
-          ),
+      return Padding(
+        padding: EdgeInsets.only(bottom: 24.h),
+        child: PressableScale(
+          onTap: () => _showEventDetails(featuredEvent),
           child: Container(
+            width: double.infinity,
+            height: 210.h,
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(24.r),
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [
-                  Colors.black.withValues(alpha: 0.1),
-                  Colors.black.withValues(alpha: 0.7),
-                ],
+              borderRadius: BorderRadius.circular(26.r),
+              border: Border.all(color: AppTheme.glassBorder),
+              image: const DecorationImage(
+                image: AssetImage('assets/images/media_worship_night.png'),
+                fit: BoxFit.cover,
+              ),
+              boxShadow: AppTheme.glow(
+                featuredEvent.isLive ? AppTheme.live : AppTheme.secondary,
+                0.25,
               ),
             ),
-            padding: EdgeInsets.all(20.w),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Container(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: 12.w,
-                        vertical: 6.h,
-                      ),
-                      decoration: BoxDecoration(
-                        color: featuredEvent.isLive
-                            ? Colors.red
-                            : AppTheme.primary,
-                        borderRadius: BorderRadius.circular(8.r),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          if (featuredEvent.isLive) ...[
-                            Icon(Icons.circle, color: Colors.white, size: 8.sp),
-                            SizedBox(width: 4.w),
-                          ],
-                          Text(
-                            featuredEvent.isLive ? 'LIVE NOW' : 'UPCOMING',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 10.sp,
-                              fontWeight: FontWeight.bold,
+            child: Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(26.r),
+                gradient: AppTheme.imageOverlay,
+              ),
+              padding: EdgeInsets.all(18.w),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      featuredEvent.isLive
+                          ? const LiveBadge()
+                          : const PillLabel(
+                              text: 'FEATURED',
+                              icon: Icons.star_rounded,
                             ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    if (canLaunchStream) ...[
-                      SizedBox(width: 8.w),
-                      Container(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: 8.w,
-                          vertical: 4.h,
+                      const Spacer(),
+                      if (canLaunchStream)
+                        const PillLabel(
+                          text: 'WATCH',
+                          icon: Icons.play_arrow_rounded,
+                          filled: true,
                         ),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.2),
-                          borderRadius: BorderRadius.circular(6.r),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              Icons.play_circle_outline,
-                              color: Colors.white,
-                              size: 12.sp,
-                            ),
-                            SizedBox(width: 4.w),
-                            Text(
-                              'Watch',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 10.sp,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
                     ],
-                  ],
-                ),
-                const Spacer(),
-                Text(
-                  featuredEvent.title,
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 20.sp,
-                    fontWeight: FontWeight.bold,
                   ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                SizedBox(height: 8.h),
-                if (featuredEvent.description != null &&
-                    featuredEvent.description!.isNotEmpty)
+                  const Spacer(),
                   Text(
-                    featuredEvent.description!,
-                    style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.9),
-                      fontSize: 12.sp,
-                    ),
+                    featuredEvent.title,
+                    style: AppTheme.heading(fontSize: 22.sp),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
-              ],
+                  SizedBox(height: 8.h),
+                  _metaRow(featuredEvent, light: true),
+                ],
+              ),
             ),
           ),
         ),
@@ -266,203 +260,226 @@ class EventsView extends GetView<EventsController> {
     });
   }
 
+  Widget _metaRow(Event event, {bool light = false}) {
+    final dateTime = DateTime.tryParse(event.startDate);
+    final color = light ? Colors.white.withValues(alpha: 0.85) : null;
+    Widget item(IconData icon, String text, {bool expand = false}) {
+      final label = Text(
+        text,
+        style: AppTheme.body(
+          fontSize: 12.sp,
+          color: color ?? AppTheme.textSecondary,
+        ),
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+      );
+      return Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14.sp, color: AppTheme.accent),
+          SizedBox(width: 4.w),
+          expand ? Flexible(child: label) : label,
+        ],
+      );
+    }
+
+    return Row(
+      children: [
+        if (dateTime != null) ...[
+          item(Icons.calendar_today_rounded, DateFormat('MMM d').format(dateTime)),
+          SizedBox(width: 12.w),
+          item(Icons.schedule_rounded, _formatTime(dateTime)),
+        ],
+        if (event.location != null) ...[
+          SizedBox(width: 12.w),
+          Expanded(child: item(Icons.place_outlined, event.location!, expand: true)),
+        ],
+      ],
+    );
+  }
+
   Widget _buildUpcomingEventsList() {
     return Obx(() {
       if (controller.isLoading.value) {
-        return const Center(child: CircularProgressIndicator());
+        return const AppLoader();
       }
 
       final events = controller.upcomingEvents;
 
       if (events.isEmpty) {
-        return Center(
-          child: Text(
-            'No upcoming events',
-            style: TextStyle(color: AppTheme.textSecondary, fontSize: 14.sp),
-          ),
+        return EmptyState(
+          icon: controller.isSearching
+              ? Icons.search_off_rounded
+              : Icons.event_busy_rounded,
+          message: controller.isSearching
+              ? 'No events match your search'
+              : 'No upcoming events',
         );
       }
 
       return Column(
-        children: events.map((event) {
-          final dateTime = DateTime.parse(event.startDate);
-          final month = _getMonthAbbreviation(dateTime.month);
-          final day = dateTime.day.toString();
-          final canLaunchStream =
-              event.isLive &&
-              event.liveUrl != null &&
-              event.liveUrl!.isNotEmpty;
-
-          return GestureDetector(
-            onTap: () => _showEventDetails(event),
-            child: Container(
-              margin: EdgeInsets.only(bottom: 16.h),
-              padding: EdgeInsets.all(16.w),
-              decoration: BoxDecoration(
-                color: AppTheme.surface,
-                borderRadius: BorderRadius.circular(16.r),
-                border: event.isLive
-                    ? Border.all(
-                        color: Colors.red.withValues(alpha: 0.5),
-                        width: 2,
-                      )
-                    : null,
-              ),
-              child: Row(
-                children: [
-                  Container(
-                    width: 50.w,
-                    padding: EdgeInsets.symmetric(vertical: 8.h),
-                    decoration: BoxDecoration(
-                      color: event.isLive
-                          ? Colors.red.withValues(alpha: 0.2)
-                          : AppTheme.background,
-                      borderRadius: BorderRadius.circular(12.r),
-                    ),
-                    child: Column(
-                      children: [
-                        Text(
-                          month,
-                          style: TextStyle(
-                            color: event.isLive ? Colors.red : AppTheme.primary,
-                            fontSize: 10.sp,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        SizedBox(height: 2.h),
-                        Text(
-                          day,
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 18.sp,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  SizedBox(width: 16.w),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Expanded(
-                              child: Text(
-                                event.title,
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 16.sp,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                            if (event.isLive) ...[
-                              SizedBox(width: 8.w),
-                              Container(
-                                padding: EdgeInsets.symmetric(
-                                  horizontal: 6.w,
-                                  vertical: 2.h,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: Colors.red,
-                                  borderRadius: BorderRadius.circular(4.r),
-                                ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Icon(
-                                      Icons.circle,
-                                      color: Colors.white,
-                                      size: 6.sp,
-                                    ),
-                                    SizedBox(width: 3.w),
-                                    Text(
-                                      'LIVE',
-                                      style: TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 9.sp,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          ],
-                        ),
-                        SizedBox(height: 4.h),
-                        Row(
-                          children: [
-                            Icon(
-                              Icons.access_time,
-                              color: AppTheme.textSecondary,
-                              size: 14.sp,
-                            ),
-                            SizedBox(width: 4.w),
-                            Text(
-                              _formatTime(dateTime),
-                              style: TextStyle(
-                                color: AppTheme.textSecondary,
-                                fontSize: 12.sp,
-                              ),
-                            ),
-                            if (event.location != null) ...[
-                              SizedBox(width: 12.w),
-                              Icon(
-                                Icons.place,
-                                color: AppTheme.textSecondary,
-                                size: 14.sp,
-                              ),
-                              SizedBox(width: 4.w),
-                              Expanded(
-                                child: Text(
-                                  event.location!,
-                                  style: TextStyle(
-                                    color: AppTheme.textSecondary,
-                                    fontSize: 12.sp,
-                                  ),
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                            ],
-                          ],
-                        ),
-                        if (event.description != null &&
-                            event.description!.isNotEmpty) ...[
-                          SizedBox(height: 8.h),
-                          Text(
-                            event.description!,
-                            style: TextStyle(
-                              color: AppTheme.textSecondary,
-                              fontSize: 12.sp,
-                            ),
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ],
-                      ],
-                    ),
-                  ),
-                  Icon(
-                    canLaunchStream
-                        ? Icons.play_circle_fill
-                        : Icons.chevron_right,
-                    color: canLaunchStream
-                        ? Colors.red
-                        : AppTheme.textSecondary,
-                    size: 24.sp,
-                  ),
-                ],
-              ),
+        children: [
+          for (var i = 0; i < events.length; i++)
+            FadeSlideIn(
+              key: ValueKey('${controller.selectedFilter.value}-${events[i].id}'),
+              index: i,
+              child: _eventTile(events[i]),
             ),
-          );
-        }).toList(),
+        ],
       );
     });
+  }
+
+  Widget _eventTile(Event event) {
+    final dateTime = DateTime.parse(event.startDate);
+    final month = _getMonthAbbreviation(dateTime.month);
+    final day = dateTime.day.toString();
+    final canLaunchStream =
+        event.isLive && event.liveUrl != null && event.liveUrl!.isNotEmpty;
+
+    return GlassCard(
+      onTap: () => _showEventDetails(event),
+      margin: EdgeInsets.only(bottom: 12.h),
+      padding: EdgeInsets.all(14.w),
+      borderColor: event.isLive ? AppTheme.live.withValues(alpha: 0.6) : null,
+      child: Row(
+        children: [
+          Container(
+            width: 56.w,
+            padding: EdgeInsets.symmetric(vertical: 9.h),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(16.r),
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: event.isLive
+                    ? [
+                        AppTheme.live.withValues(alpha: 0.35),
+                        AppTheme.live.withValues(alpha: 0.10),
+                      ]
+                    : [
+                        AppTheme.accent.withValues(alpha: 0.28),
+                        AppTheme.secondary.withValues(alpha: 0.10),
+                      ],
+              ),
+              border: Border.all(color: AppTheme.glassBorder),
+            ),
+            child: Column(
+              children: [
+                Text(
+                  month,
+                  style: AppTheme.body(
+                    fontSize: 10.sp,
+                    fontWeight: FontWeight.w700,
+                    color: event.isLive ? AppTheme.live : AppTheme.accent,
+                    letterSpacing: 1,
+                  ),
+                ),
+                SizedBox(height: 2.h),
+                Text(day, style: AppTheme.heading(fontSize: 21.sp)),
+              ],
+            ),
+          ),
+          SizedBox(width: 14.w),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        event.title,
+                        style: AppTheme.body(
+                          fontSize: 15.sp,
+                          fontWeight: FontWeight.w600,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    if (event.isLive) ...[
+                      SizedBox(width: 8.w),
+                      const LiveBadge(text: 'LIVE', compact: true),
+                    ],
+                  ],
+                ),
+                SizedBox(height: 5.h),
+                Row(
+                  children: [
+                    Icon(
+                      Icons.schedule_rounded,
+                      color: AppTheme.accent,
+                      size: 14.sp,
+                    ),
+                    SizedBox(width: 4.w),
+                    Text(
+                      _formatTime(dateTime),
+                      style: AppTheme.body(
+                        color: AppTheme.textSecondary,
+                        fontSize: 12.sp,
+                      ),
+                    ),
+                    if (event.location != null) ...[
+                      SizedBox(width: 10.w),
+                      Icon(
+                        Icons.place_outlined,
+                        color: AppTheme.accent,
+                        size: 14.sp,
+                      ),
+                      SizedBox(width: 3.w),
+                      Expanded(
+                        child: Text(
+                          event.location!,
+                          style: AppTheme.body(
+                            color: AppTheme.textSecondary,
+                            fontSize: 12.sp,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+                if (event.description != null &&
+                    event.description!.isNotEmpty) ...[
+                  SizedBox(height: 6.h),
+                  Text(
+                    event.description!,
+                    style: AppTheme.body(
+                      color: AppTheme.textMuted,
+                      fontSize: 12.sp,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ],
+            ),
+          ),
+          SizedBox(width: 6.w),
+          canLaunchStream
+              ? Container(
+                  width: 34.w,
+                  height: 34.w,
+                  decoration: const BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: AppTheme.primaryGradient,
+                  ),
+                  child: Icon(
+                    Icons.play_arrow_rounded,
+                    color: Colors.white,
+                    size: 20.sp,
+                  ),
+                )
+              : Icon(
+                  Icons.chevron_right_rounded,
+                  color: AppTheme.accent,
+                  size: 22.sp,
+                ),
+        ],
+      ),
+    );
   }
 
   String _getMonthAbbreviation(int month) {
@@ -491,7 +508,19 @@ class EventsView extends GetView<EventsController> {
     return '$displayHour:$minute $period';
   }
 
-  Future<void> _launchStream(String url) async {
+  /// Opens video links in the in-app player (same as Home), others externally.
+  Future<void> _launchStream(String url, {String? title}) async {
+    if (url.contains('youtube.com') ||
+        url.contains('youtu.be') ||
+        url.contains('.mp4') ||
+        url.contains('.m3u8') ||
+        url.toLowerCase().contains('stream')) {
+      Get.toNamed(
+        Routes.videoPlayer,
+        arguments: {'url': url, 'title': title ?? 'Live Stream'},
+      );
+      return;
+    }
     try {
       final uri = Uri.parse(url);
       if (await canLaunchUrl(uri)) {
@@ -501,7 +530,7 @@ class EventsView extends GetView<EventsController> {
           'Error',
           'Could not open stream',
           snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Colors.red,
+          backgroundColor: AppTheme.live,
           colorText: Colors.white,
         );
       }
@@ -510,118 +539,83 @@ class EventsView extends GetView<EventsController> {
         'Error',
         'Failed to launch stream: $e',
         snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
+        backgroundColor: AppTheme.live,
         colorText: Colors.white,
       );
     }
   }
 
-  void _showEventDetails(event) {
+  void _showEventDetails(Event event) {
     final dateTime = DateTime.parse(event.startDate);
     final canLaunchStream =
         event.isLive && event.liveUrl != null && event.liveUrl!.isNotEmpty;
 
     Get.bottomSheet(
       Container(
-        padding: EdgeInsets.all(24.w),
+        padding: EdgeInsets.fromLTRB(24.w, 14.h, 24.w, 28.h),
         decoration: BoxDecoration(
           color: AppTheme.surface,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24.r)),
+          borderRadius: BorderRadius.vertical(top: Radius.circular(30.r)),
+          border: Border(top: BorderSide(color: AppTheme.glassBorder)),
         ),
         child: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Handle Drag Indicator
               Center(
                 child: Container(
-                  width: 40.w,
-                  height: 4.h,
-                  margin: EdgeInsets.only(bottom: 24.h),
+                  width: 44.w,
+                  height: 5.h,
+                  margin: EdgeInsets.only(bottom: 20.h),
                   decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.2),
-                    borderRadius: BorderRadius.circular(2.r),
+                    gradient: AppTheme.primaryGradient,
+                    borderRadius: BorderRadius.circular(3.r),
                   ),
                 ),
               ),
-              // Note: Event model does not have imageUrl, so skipping image display
-              Text(
-                event.title,
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 24.sp,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              SizedBox(height: 16.h),
+              if (event.isLive) ...[
+                const LiveBadge(),
+                SizedBox(height: 12.h),
+              ] else if (event.isFeatured) ...[
+                const PillLabel(text: 'FEATURED', icon: Icons.star_rounded),
+                SizedBox(height: 12.h),
+              ],
+              Text(event.title, style: AppTheme.heading(fontSize: 25.sp)),
+              SizedBox(height: 18.h),
               _buildDetailRow(
-                Icons.calendar_today,
+                Icons.calendar_today_rounded,
                 DateFormat('EEEE, MMMM d, yyyy').format(dateTime),
               ),
               SizedBox(height: 12.h),
               _buildDetailRow(
-                Icons.access_time,
+                Icons.schedule_rounded,
                 DateFormat('h:mm a').format(dateTime),
               ),
               if (event.location != null) ...[
                 SizedBox(height: 12.h),
-                _buildDetailRow(Icons.place, event.location!),
+                _buildDetailRow(Icons.place_rounded, event.location!),
               ],
-              SizedBox(height: 24.h),
-              Text(
-                "Description",
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 18.sp,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
+              SizedBox(height: 22.h),
+              Text('About this event', style: AppTheme.heading(fontSize: 18.sp)),
               SizedBox(height: 8.h),
               Text(
-                event.description ?? "No description available.",
-                style: TextStyle(
+                event.description ?? 'No description available.',
+                style: AppTheme.body(
                   color: AppTheme.textSecondary,
                   fontSize: 14.sp,
-                  height: 1.5,
+                  height: 1.6,
                 ),
               ),
-              SizedBox(height: 32.h),
+              SizedBox(height: 28.h),
               if (canLaunchStream)
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: () {
-                      Get.back();
-                      _launchStream(event.liveUrl!);
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.red,
-                      padding: EdgeInsets.symmetric(vertical: 16.h),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12.r),
-                      ),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.play_circle_fill,
-                          color: Colors.white,
-                          size: 20.sp,
-                        ),
-                        SizedBox(width: 8.w),
-                        Text(
-                          "Watch Live Stream",
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 16.sp,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
+                GradientButton(
+                  label: 'Watch Live Stream',
+                  icon: Icons.play_circle_fill_rounded,
+                  onPressed: () {
+                    Get.back();
+                    _launchStream(event.liveUrl!, title: event.title);
+                  },
                 ),
             ],
           ),
@@ -635,22 +629,20 @@ class EventsView extends GetView<EventsController> {
     return Row(
       children: [
         Container(
-          padding: EdgeInsets.all(8.w),
+          width: 40.w,
+          height: 40.w,
           decoration: BoxDecoration(
-            color: AppTheme.primary.withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(8.r),
+            color: AppTheme.accent.withValues(alpha: 0.14),
+            borderRadius: BorderRadius.circular(12.r),
+            border: Border.all(color: AppTheme.glassBorder),
           ),
-          child: Icon(icon, color: AppTheme.primary, size: 20.sp),
+          child: Icon(icon, color: AppTheme.accent, size: 20.sp),
         ),
         SizedBox(width: 12.w),
         Expanded(
           child: Text(
             text,
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 16.sp,
-              fontWeight: FontWeight.w500,
-            ),
+            style: AppTheme.body(fontSize: 15.sp, fontWeight: FontWeight.w500),
           ),
         ),
       ],

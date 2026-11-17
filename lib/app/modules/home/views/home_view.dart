@@ -1,5 +1,6 @@
 import 'package:church_app/app/core/theme/app_theme.dart';
 import 'package:church_app/app/core/widgets/bottom_nav_bar.dart';
+import 'package:church_app/app/core/widgets/ui_kit.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -8,6 +9,7 @@ import 'package:church_app/app/routes/app_pages.dart';
 import 'package:intl/intl.dart';
 import 'package:share_plus/share_plus.dart';
 import '../controllers/home_controller.dart';
+import '../../../data/models/event.dart';
 import '../../notifications/views/notification_view.dart';
 
 class HomeView extends GetView<HomeController> {
@@ -17,60 +19,97 @@ class HomeView extends GetView<HomeController> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppTheme.background,
-      body: SafeArea(
-        child: Column(
-          children: [
-            Expanded(
-              child: SingleChildScrollView(
-                padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 24.h),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildHeader(),
-                    SizedBox(height: 24.h),
-                    _buildVerseCard(),
-                    SizedBox(height: 24.h),
-                    _buildQuickActions(),
-                    SizedBox(height: 32.h),
-                    _buildNoticeBanner(),
-                    SizedBox(height: 32.h),
-                    _buildSectionHeader(
-                      'Upcoming Events',
-                      onSeeAll: () => Get.toNamed(Routes.events),
+      body: AppBackground(
+        child: SafeArea(
+          bottom: false,
+          child: Column(
+            children: [
+              Expanded(
+                child: RefreshIndicator(
+                  color: AppTheme.primary,
+                  backgroundColor: AppTheme.surface,
+                  onRefresh: controller.fetchContent,
+                  child: SingleChildScrollView(
+                    physics: const AlwaysScrollableScrollPhysics(
+                      parent: BouncingScrollPhysics(),
                     ),
-                    SizedBox(height: 16.h),
-                    _buildEventsList(),
-                    SizedBox(height: 32.h),
-                    _buildSectionHeader(
-                      'Gallery',
-                      onSeeAll: () => Get.toNamed(Routes.media),
+                    padding: EdgeInsets.fromLTRB(20.w, 16.h, 20.w, 24.h),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        FadeSlideIn(index: 0, child: _buildHeader()),
+                        SizedBox(height: 22.h),
+                        FadeSlideIn(index: 1, child: _buildVerseCard()),
+                        SizedBox(height: 22.h),
+                        FadeSlideIn(index: 2, child: _buildQuickActions()),
+                        SizedBox(height: 22.h),
+                        FadeSlideIn(index: 3, child: _buildNoticeBanner()),
+                        FadeSlideIn(index: 4, child: _buildFeaturedEvent()),
+                        SizedBox(height: 26.h),
+                        FadeSlideIn(
+                          index: 5,
+                          child: SectionHeader(
+                            title: 'Upcoming Events',
+                            onSeeAll: () => Get.toNamed(Routes.events),
+                          ),
+                        ),
+                        SizedBox(height: 14.h),
+                        _buildEventsList(),
+                        SizedBox(height: 18.h),
+                        FadeSlideIn(
+                          index: 7,
+                          child: SectionHeader(
+                            title: 'Gallery',
+                            onSeeAll: () => Get.toNamed(Routes.media),
+                          ),
+                        ),
+                        SizedBox(height: 14.h),
+                        FadeSlideIn(index: 8, child: _buildGalleryPreview()),
+                      ],
                     ),
-                    SizedBox(height: 16.h),
-                    _buildGalleryPreview(),
-                    SizedBox(height: 32.h),
-                    _buildFeaturedEvent(),
-                  ],
+                  ),
                 ),
               ),
-            ),
-            const AppBottomNavBar(currentRoute: Routes.home),
-          ],
+              const AppBottomNavBar(currentRoute: Routes.home),
+            ],
+          ),
         ),
       ),
     );
   }
 
+  // ---------------------------------------------------------------------------
+  // Header
+  // ---------------------------------------------------------------------------
+
+  String get _greeting {
+    final hour = DateTime.now().hour;
+    if (hour < 12) return 'Good morning';
+    if (hour < 17) return 'Good afternoon';
+    return 'Good evening';
+  }
+
   Widget _buildHeader() {
     return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Row(
-          children: [
-            GestureDetector(
-              onTap: () => Get.toNamed(Routes.profile),
+        PressableScale(
+          onTap: () => Get.toNamed(Routes.profile),
+          child: Container(
+            padding: EdgeInsets.all(2.5.r),
+            decoration: const BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: AppTheme.primaryGradient,
+            ),
+            child: Container(
+              padding: EdgeInsets.all(2.r),
+              decoration: const BoxDecoration(
+                shape: BoxShape.circle,
+                color: AppTheme.background,
+              ),
               child: Obx(
                 () => CircleAvatar(
-                  radius: 20.r,
+                  radius: 21.r,
+                  backgroundColor: AppTheme.surface,
                   backgroundImage: controller.userImage.value != null
                       ? NetworkImage(controller.userImage.value!)
                             as ImageProvider
@@ -78,53 +117,42 @@ class HomeView extends GetView<HomeController> {
                 ),
               ),
             ),
-            SizedBox(width: 12.w),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Hello, ${controller.userName}',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 16.sp,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                Text(
-                  'Welcome back',
-                  style: TextStyle(
-                    color: AppTheme.textSecondary,
-                    fontSize: 12.sp,
-                  ),
-                ),
-              ],
-            ),
-          ],
+          ),
         ),
-        GestureDetector(
-          onTap: () => Get.to(() => const NotificationView()),
-          child: Stack(
+        SizedBox(width: 12.w),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Icon(Icons.notifications, color: Colors.white, size: 24.sp),
-              // TODO: Only show red dot if unread notifications exist
-              Positioned(
-                right: 0,
-                top: 0,
-                child: Container(
-                  width: 8.r,
-                  height: 8.r,
-                  decoration: const BoxDecoration(
-                    color: Colors.red,
-                    shape: BoxShape.circle,
-                  ),
+              Text(
+                '$_greeting 👋',
+                style: AppTheme.body(
+                  fontSize: 12.sp,
+                  color: AppTheme.textSecondary,
                 ),
+              ),
+              SizedBox(height: 2.h),
+              Text(
+                controller.userName,
+                style: AppTheme.heading(fontSize: 20.sp),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
             ],
           ),
         ),
+        GlassIconButton(
+          icon: Icons.notifications_none_rounded,
+          showDot: true, // TODO: only show when unread notifications exist
+          onTap: () => Get.to(() => const NotificationView()),
+        ),
       ],
     );
   }
+
+  // ---------------------------------------------------------------------------
+  // Verse of the day
+  // ---------------------------------------------------------------------------
 
   Widget _buildVerseCard() {
     return Obx(() {
@@ -134,113 +162,217 @@ class HomeView extends GetView<HomeController> {
       }
 
       return Container(
-        width: double.infinity,
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(24.r),
-          image: const DecorationImage(
-            image: AssetImage('assets/images/verse_bg.png'),
-            fit: BoxFit.cover,
-          ),
+          borderRadius: BorderRadius.circular(26.r),
+          border: Border.all(color: AppTheme.glassBorder),
+          boxShadow: AppTheme.glow(AppTheme.secondary, 0.18),
         ),
-        child: Container(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(24.r),
-            gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [
-                Colors.black.withValues(alpha: 0.1),
-                Colors.black.withValues(alpha: 0.7),
-              ],
+        child: ShimmerSweep(
+          borderRadius: BorderRadius.circular(26.r),
+          child: Container(
+            width: double.infinity,
+            decoration: const BoxDecoration(
+              image: DecorationImage(
+                image: AssetImage('assets/images/verse_bg.png'),
+                fit: BoxFit.cover,
+              ),
             ),
-          ),
-          padding: EdgeInsets.all(20.w),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
-                decoration: BoxDecoration(
-                  color: AppTheme.primary,
-                  borderRadius: BorderRadius.circular(20.r),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      Icons.wb_sunny_outlined,
-                      color: Colors.white,
-                      size: 14.sp,
-                    ),
-                    SizedBox(width: 6.w),
-                    Text(
-                      'VERSE OF THE DAY',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 10.sp,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
+            child: Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    AppTheme.background.withValues(alpha: 0.25),
+                    AppTheme.backgroundAlt.withValues(alpha: 0.9),
                   ],
                 ),
               ),
-              SizedBox(height: 12.h),
-              Text(
-                '"${verse.content}"', // Dynamic content
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 18.sp,
-                  fontWeight: FontWeight.bold,
-                  height: 1.3,
-                ),
-              ),
-              SizedBox(height: 8.h),
-              if (verse.title != null) // Dynamic title/reference part 2
-                Text(
-                  verse.title!,
-                  style: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.9),
-                    fontSize: 12.sp,
-                    height: 1.4,
-                  ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              SizedBox(height: 16.h),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              padding: EdgeInsets.all(20.w),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  const PillLabel(
+                    text: 'VERSE OF THE DAY',
+                    icon: Icons.wb_sunny_outlined,
+                  ),
+                  SizedBox(height: 14.h),
                   Text(
-                    _formatDate(verse.date), // Formatted date
-                    style: TextStyle(
-                      color: AppTheme.primary,
-                      fontSize: 14.sp,
+                    '“${verse.content}”',
+                    style: AppTheme.heading(
+                      fontSize: 19.sp,
                       fontWeight: FontWeight.w600,
+                      height: 1.35,
                     ),
                   ),
-                  GestureDetector(
-                    onTap: () {
-                      // ignore: deprecated_member_use
-                      Share.share(
-                        '"${verse.content}" - ${verse.title ?? verse.date}',
-                        subject: 'Verse of the Day',
-                      );
-                    },
-                    child: Container(
-                      padding: EdgeInsets.all(8.w),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.2),
-                        shape: BoxShape.circle,
+                  if (verse.title != null) ...[
+                    SizedBox(height: 8.h),
+                    Text(
+                      '— ${verse.title!}',
+                      style: AppTheme.body(
+                        fontSize: 13.sp,
+                        fontWeight: FontWeight.w600,
+                        color: AppTheme.accent,
                       ),
-                      child: Icon(
-                        Icons.share,
-                        color: Colors.white,
-                        size: 16.sp,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                  SizedBox(height: 14.h),
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.event_note_rounded,
+                        size: 14.sp,
+                        color: AppTheme.textSecondary,
                       ),
+                      SizedBox(width: 6.w),
+                      Expanded(
+                        child: Text(
+                          _formatDate(verse.date),
+                          style: AppTheme.body(
+                            fontSize: 12.sp,
+                            color: AppTheme.textSecondary,
+                          ),
+                        ),
+                      ),
+                      GlassIconButton(
+                        icon: Icons.ios_share_rounded,
+                        size: 38,
+                        onTap: () {
+                          // ignore: deprecated_member_use
+                          Share.share(
+                            '"${verse.content}" - ${verse.title ?? verse.date}',
+                            subject: 'Verse of the Day',
+                          );
+                        },
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+    });
+  }
+
+  // ---------------------------------------------------------------------------
+  // Quick actions
+  // ---------------------------------------------------------------------------
+
+  Widget _buildQuickActions() {
+    final actions = <(IconData, String, VoidCallback)>[
+      (Icons.calendar_month_rounded, 'Events', () => Get.toNamed(Routes.events)),
+      (Icons.groups_rounded, 'Directory', () => Get.toNamed(Routes.directory)),
+      (Icons.photo_library_rounded, 'Gallery', () => Get.toNamed(Routes.media)),
+      (Icons.person_rounded, 'Profile', () => Get.toNamed(Routes.profile)),
+    ];
+
+    return Row(
+      children: [
+        for (var i = 0; i < actions.length; i++) ...[
+          if (i > 0) SizedBox(width: 10.w),
+          Expanded(
+            child: PressableScale(
+              onTap: actions[i].$3,
+              child: Column(
+                children: [
+                  Container(
+                    height: 62.w,
+                    width: double.infinity,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: AppTheme.glass,
+                      borderRadius: BorderRadius.circular(18.r),
+                      border: Border.all(color: AppTheme.glassBorder),
+                    ),
+                    child: GradientMask(
+                      child: Icon(actions[i].$1, size: 27.sp),
+                    ),
+                  ),
+                  SizedBox(height: 7.h),
+                  Text(
+                    actions[i].$2,
+                    style: AppTheme.body(
+                      fontSize: 11.sp,
+                      fontWeight: FontWeight.w500,
+                      color: AppTheme.textSecondary,
                     ),
                   ),
                 ],
               ),
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+
+  // ---------------------------------------------------------------------------
+  // Notice banner
+  // ---------------------------------------------------------------------------
+
+  Widget _buildNoticeBanner() {
+    return Obx(() {
+      if (controller.announcements.isEmpty) {
+        return const SizedBox.shrink(); // Hide if no announcements
+      }
+      final announcement = controller.announcements.first;
+
+      return Padding(
+        padding: EdgeInsets.only(bottom: 22.h),
+        child: GlassCard(
+          padding: EdgeInsets.all(14.w),
+          radius: 20.r,
+          borderColor: AppTheme.accent.withValues(alpha: 0.45),
+          gradient: LinearGradient(
+            colors: [
+              AppTheme.accent.withValues(alpha: 0.22),
+              AppTheme.secondary.withValues(alpha: 0.12),
+            ],
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 44.w,
+                height: 44.w,
+                decoration: BoxDecoration(
+                  gradient: AppTheme.primaryGradient,
+                  borderRadius: BorderRadius.circular(14.r),
+                ),
+                child: Icon(
+                  Icons.campaign_rounded,
+                  color: Colors.white,
+                  size: 24.sp,
+                ),
+              ),
+              SizedBox(width: 14.w),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      announcement.title,
+                      style: AppTheme.body(
+                        fontSize: 14.sp,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    SizedBox(height: 3.h),
+                    Text(
+                      announcement.content,
+                      style: AppTheme.body(
+                        fontSize: 12.sp,
+                        color: Colors.white.withValues(alpha: 0.85),
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              ),
             ],
           ),
         ),
@@ -248,126 +380,470 @@ class HomeView extends GetView<HomeController> {
     });
   }
 
-  Widget _buildQuickActions() {
-    final actions = [
-      {
-        'icon': Icons.calendar_month,
-        'label': 'Events',
-        'onTap': () => Get.toNamed(Routes.events),
-      },
-      {
-        'icon': Icons.people,
-        'label': 'Directory',
-        'onTap': () => Get.toNamed(Routes.directory),
-      },
-      {
-        'icon': Icons.photo_library,
-        'label': 'Gallery',
-        'onTap': () => Get.toNamed(Routes.media),
-      },
-    ];
+  // ---------------------------------------------------------------------------
+  // Featured / live event
+  // ---------------------------------------------------------------------------
 
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: actions.map((action) {
-        return GestureDetector(
-          onTap: action['onTap'] as VoidCallback?,
-          child: Column(
-            children: [
-              Container(
-                width: 60.w,
-                height: 60.w,
-                decoration: BoxDecoration(
-                  color: AppTheme.surface,
-                  borderRadius: BorderRadius.circular(16.r),
-                ),
-                child: Icon(
-                  action['icon'] as IconData,
-                  color: Colors.white.withValues(alpha: 0.9),
-                  size: 28.sp,
-                ),
-              ),
-              SizedBox(height: 8.h),
-              Text(
-                action['label'] as String,
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 12.sp,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ],
+  Widget _buildFeaturedEvent() {
+    return Obx(() {
+      final event = controller.featuredEvent;
+      if (event == null) return const SizedBox.shrink();
+
+      final canLaunchStream =
+          event.isLive && event.liveUrl != null && event.liveUrl!.isNotEmpty;
+
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SectionHeader(
+            title: event.isLive ? 'Happening Now' : 'Featured Event',
           ),
+          SizedBox(height: 14.h),
+          PressableScale(
+            onTap: canLaunchStream
+                ? () => _launchURL(event.liveUrl!, title: event.title)
+                : () => _showEventDetails(event),
+            child: Container(
+              width: double.infinity,
+              height: 190.h,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(26.r),
+                border: Border.all(color: AppTheme.glassBorder),
+                image: const DecorationImage(
+                  image: AssetImage('assets/images/event_easter.png'),
+                  fit: BoxFit.cover,
+                ),
+                boxShadow: AppTheme.glow(
+                  event.isLive ? AppTheme.live : AppTheme.secondary,
+                  0.25,
+                ),
+              ),
+              child: Container(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(26.r),
+                  gradient: AppTheme.imageOverlay,
+                ),
+                padding: EdgeInsets.all(18.w),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    event.isLive
+                        ? const LiveBadge()
+                        : const PillLabel(
+                            text: 'UPCOMING',
+                            icon: Icons.star_rounded,
+                          ),
+                    const Spacer(),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                event.title,
+                                style: AppTheme.heading(fontSize: 21.sp),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              SizedBox(height: 4.h),
+                              Text(
+                                [
+                                  _formatDateTimeShort(event.startDate),
+                                  if (event.location != null) event.location!,
+                                ].join(' · '),
+                                style: AppTheme.body(
+                                  fontSize: 12.sp,
+                                  color: AppTheme.textSecondary,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
+                          ),
+                        ),
+                        SizedBox(width: 12.w),
+                        Container(
+                          width: 48.w,
+                          height: 48.w,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            gradient: AppTheme.primaryGradient,
+                            boxShadow: AppTheme.glow(),
+                          ),
+                          child: Icon(
+                            canLaunchStream
+                                ? Icons.play_arrow_rounded
+                                : Icons.arrow_forward_rounded,
+                            color: Colors.white,
+                            size: 26.sp,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      );
+    });
+  }
+
+  // ---------------------------------------------------------------------------
+  // Upcoming events
+  // ---------------------------------------------------------------------------
+
+  Widget _buildEventsList() {
+    return Obx(() {
+      if (controller.isLoading.value) {
+        return const AppLoader();
+      }
+
+      if (controller.upcomingEvents.isEmpty) {
+        return const EmptyState(
+          icon: Icons.event_busy_rounded,
+          message: 'No upcoming events',
         );
-      }).toList(),
+      }
+
+      final events = controller.upcomingEvents.toList();
+      return Column(
+        children: [
+          for (var i = 0; i < events.length; i++)
+            FadeSlideIn(index: 6 + i, child: _eventTile(events[i])),
+        ],
+      );
+    });
+  }
+
+  Widget _eventTile(Event event) {
+    final dateTime = DateTime.parse(event.startDate);
+    final month = _getMonthAbbreviation(dateTime.month);
+    final day = dateTime.day.toString();
+    final isLive = event.isLive;
+
+    return GlassCard(
+      onTap: () => _showEventDetails(event),
+      margin: EdgeInsets.only(bottom: 12.h),
+      padding: EdgeInsets.all(14.w),
+      borderColor: isLive ? AppTheme.live.withValues(alpha: 0.6) : null,
+      child: Row(
+        children: [
+          Container(
+            width: 54.w,
+            padding: EdgeInsets.symmetric(vertical: 8.h),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(16.r),
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: isLive
+                    ? [
+                        AppTheme.live.withValues(alpha: 0.35),
+                        AppTheme.live.withValues(alpha: 0.10),
+                      ]
+                    : [
+                        AppTheme.accent.withValues(alpha: 0.28),
+                        AppTheme.secondary.withValues(alpha: 0.10),
+                      ],
+              ),
+              border: Border.all(color: AppTheme.glassBorder),
+            ),
+            child: Column(
+              children: [
+                Text(
+                  month,
+                  style: AppTheme.body(
+                    fontSize: 10.sp,
+                    fontWeight: FontWeight.w700,
+                    color: isLive ? AppTheme.live : AppTheme.accent,
+                    letterSpacing: 1,
+                  ),
+                ),
+                SizedBox(height: 2.h),
+                Text(day, style: AppTheme.heading(fontSize: 20.sp)),
+              ],
+            ),
+          ),
+          SizedBox(width: 14.w),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        event.title,
+                        style: AppTheme.body(
+                          fontSize: 15.sp,
+                          fontWeight: FontWeight.w600,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    if (isLive) ...[
+                      SizedBox(width: 8.w),
+                      const LiveBadge(text: 'LIVE', compact: true),
+                    ],
+                  ],
+                ),
+                SizedBox(height: 5.h),
+                Row(
+                  children: [
+                    Icon(
+                      Icons.schedule_rounded,
+                      color: AppTheme.accent,
+                      size: 14.sp,
+                    ),
+                    SizedBox(width: 4.w),
+                    Text(
+                      _formatTime(dateTime),
+                      style: AppTheme.body(
+                        color: AppTheme.textSecondary,
+                        fontSize: 12.sp,
+                      ),
+                    ),
+                    if (event.location != null) ...[
+                      SizedBox(width: 10.w),
+                      Icon(
+                        Icons.place_outlined,
+                        color: AppTheme.accent,
+                        size: 14.sp,
+                      ),
+                      SizedBox(width: 3.w),
+                      Expanded(
+                        child: Text(
+                          event.location!,
+                          style: AppTheme.body(
+                            color: AppTheme.textSecondary,
+                            fontSize: 12.sp,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+                if (event.description != null &&
+                    event.description!.isNotEmpty) ...[
+                  SizedBox(height: 6.h),
+                  Text(
+                    event.description!,
+                    style: AppTheme.body(
+                      color: AppTheme.textMuted,
+                      fontSize: 12.sp,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ],
+            ),
+          ),
+          SizedBox(width: 6.w),
+          Icon(
+            Icons.chevron_right_rounded,
+            color: AppTheme.accent,
+            size: 22.sp,
+          ),
+        ],
+      ),
     );
   }
+
+  // ---------------------------------------------------------------------------
+  // Gallery preview
+  // ---------------------------------------------------------------------------
 
   Widget _buildGalleryPreview() {
     return Obx(() {
       if (controller.galleryAlbums.isEmpty) {
-        return Center(
-          child: Text(
-            'No photos available',
-            style: TextStyle(color: AppTheme.textSecondary),
-          ),
+        return const EmptyState(
+          icon: Icons.photo_library_outlined,
+          message: 'No photos available',
         );
       }
 
+      final albums = controller.galleryAlbums.toList();
       return Row(
-        children: controller.galleryAlbums.map((album) {
-          return Expanded(
-            child: GestureDetector(
-              onTap: () => Get.toNamed(
-                Routes.albumDetail,
-                arguments: {'id': album.id, 'title': album.title},
-              ),
-              child: Container(
-                height: 120.h,
-                margin: EdgeInsets.only(right: 12.w),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(16.r),
-                  image: DecorationImage(
-                    image: NetworkImage(
-                      album.coverImage ?? 'https://via.placeholder.com/300',
-                    ),
-                    fit: BoxFit.cover,
-                    onError: (e, s) =>
-                        const AssetImage('assets/images/placeholder.png'),
-                  ),
+        children: [
+          for (var i = 0; i < albums.length; i++) ...[
+            if (i > 0) SizedBox(width: 12.w),
+            Expanded(
+              child: PressableScale(
+                onTap: () => Get.toNamed(
+                  Routes.albumDetail,
+                  arguments: {'id': albums[i].id, 'title': albums[i].title},
                 ),
                 child: Container(
+                  height: 130.h,
                   decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(16.r),
-                    gradient: LinearGradient(
-                      begin: Alignment.bottomCenter,
-                      end: Alignment.topCenter,
-                      colors: [
-                        Colors.black.withValues(alpha: 0.7),
-                        Colors.transparent,
+                    color: AppTheme.surface,
+                    borderRadius: BorderRadius.circular(20.r),
+                    border: Border.all(color: AppTheme.glassBorder),
+                    image: albums[i].coverImage != null
+                        ? DecorationImage(
+                            image: NetworkImage(albums[i].coverImage!),
+                            fit: BoxFit.cover,
+                            onError: (e, s) {},
+                          )
+                        : null,
+                  ),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(20.r),
+                      gradient: AppTheme.imageOverlay,
+                    ),
+                    padding: EdgeInsets.all(10.w),
+                    alignment: Alignment.bottomLeft,
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            albums[i].title,
+                            style: AppTheme.body(
+                              fontSize: 12.sp,
+                              fontWeight: FontWeight.w700,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        Icon(
+                          Icons.photo_library_outlined,
+                          size: 14.sp,
+                          color: AppTheme.accent,
+                        ),
                       ],
                     ),
-                  ),
-                  padding: EdgeInsets.all(8.w),
-                  alignment: Alignment.bottomLeft,
-                  child: Text(
-                    album.title,
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 12.sp,
-                      fontWeight: FontWeight.bold,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
               ),
             ),
-          );
-        }).toList(),
+          ],
+          // Keep a single album at half width, like before.
+          if (albums.length == 1) ...[
+            SizedBox(width: 12.w),
+            const Expanded(child: SizedBox()),
+          ],
+        ],
       );
     });
   }
+
+  // ---------------------------------------------------------------------------
+  // Event details sheet
+  // ---------------------------------------------------------------------------
+
+  void _showEventDetails(event) {
+    final dateTime = DateTime.parse(event.startDate);
+    final canLaunchStream =
+        event.isLive && event.liveUrl != null && event.liveUrl!.isNotEmpty;
+
+    Get.bottomSheet(
+      Container(
+        padding: EdgeInsets.fromLTRB(24.w, 14.h, 24.w, 28.h),
+        decoration: BoxDecoration(
+          color: AppTheme.surface,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(30.r)),
+          border: Border(top: BorderSide(color: AppTheme.glassBorder)),
+        ),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 44.w,
+                  height: 5.h,
+                  margin: EdgeInsets.only(bottom: 20.h),
+                  decoration: BoxDecoration(
+                    gradient: AppTheme.primaryGradient,
+                    borderRadius: BorderRadius.circular(3.r),
+                  ),
+                ),
+              ),
+              if (event.isLive) ...[
+                const LiveBadge(),
+                SizedBox(height: 12.h),
+              ],
+              Text(event.title, style: AppTheme.heading(fontSize: 25.sp)),
+              SizedBox(height: 18.h),
+              _buildDetailRow(
+                Icons.calendar_today_rounded,
+                DateFormat('EEEE, MMMM d, yyyy').format(dateTime),
+              ),
+              SizedBox(height: 12.h),
+              _buildDetailRow(
+                Icons.schedule_rounded,
+                DateFormat('h:mm a').format(dateTime),
+              ),
+              if (event.location != null) ...[
+                SizedBox(height: 12.h),
+                _buildDetailRow(Icons.place_rounded, event.location!),
+              ],
+              SizedBox(height: 22.h),
+              Text('About this event', style: AppTheme.heading(fontSize: 18.sp)),
+              SizedBox(height: 8.h),
+              Text(
+                event.description ?? 'No description available.',
+                style: AppTheme.body(
+                  color: AppTheme.textSecondary,
+                  fontSize: 14.sp,
+                  height: 1.6,
+                ),
+              ),
+              SizedBox(height: 28.h),
+              if (canLaunchStream)
+                GradientButton(
+                  label: 'Watch Live Stream',
+                  icon: Icons.play_circle_fill_rounded,
+                  onPressed: () {
+                    Get.back();
+                    _launchURL(event.liveUrl!, title: event.title);
+                  },
+                ),
+            ],
+          ),
+        ),
+      ),
+      isScrollControlled: true,
+    );
+  }
+
+  Widget _buildDetailRow(IconData icon, String text) {
+    return Row(
+      children: [
+        Container(
+          width: 40.w,
+          height: 40.w,
+          decoration: BoxDecoration(
+            color: AppTheme.accent.withValues(alpha: 0.14),
+            borderRadius: BorderRadius.circular(12.r),
+            border: Border.all(color: AppTheme.glassBorder),
+          ),
+          child: Icon(icon, color: AppTheme.accent, size: 20.sp),
+        ),
+        SizedBox(width: 12.w),
+        Expanded(
+          child: Text(
+            text,
+            style: AppTheme.body(fontSize: 15.sp, fontWeight: FontWeight.w500),
+          ),
+        ),
+      ],
+    );
+  }
+
+  // ---------------------------------------------------------------------------
+  // Helpers (unchanged behaviour)
+  // ---------------------------------------------------------------------------
 
   Future<void> _launchURL(String url, {String? title}) async {
     // Check if it's a video URL (YouTube or other video links)
@@ -394,564 +870,6 @@ class HomeView extends GetView<HomeController> {
         Get.snackbar('Error', 'Failed to launch URL: $e');
       }
     }
-  }
-
-  Widget _buildSectionHeader(String title, {VoidCallback? onSeeAll}) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(
-          title,
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 18.sp,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        if (onSeeAll != null)
-          GestureDetector(
-            onTap: onSeeAll,
-            child: Text(
-              'See All',
-              style: TextStyle(
-                color: AppTheme.primary,
-                fontSize: 14.sp,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ),
-      ],
-    );
-  }
-
-  Widget _buildFeaturedEvent() {
-    return Obx(() {
-      final event = controller.featuredEvent;
-      if (event == null) return const SizedBox.shrink();
-
-      final canLaunchStream =
-          event.isLive && event.liveUrl != null && event.liveUrl!.isNotEmpty;
-
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildSectionHeader('Featured Event'),
-          SizedBox(height: 16.h),
-          GestureDetector(
-            onTap: canLaunchStream
-                ? () => _launchURL(event.liveUrl!, title: event.title)
-                : () => Get.toNamed(Routes.events),
-            child: Container(
-              width: double.infinity,
-              height: 200.h,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(24.r),
-                color: AppTheme.surface,
-              ),
-              child: Container(
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(24.r),
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [
-                      Colors.black.withValues(alpha: 0.1),
-                      Colors.black.withValues(alpha: 0.7),
-                    ],
-                  ),
-                ),
-                padding: EdgeInsets.all(20.w),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Container(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: 12.w,
-                            vertical: 6.h,
-                          ),
-                          decoration: BoxDecoration(
-                            color: event.isLive ? Colors.red : AppTheme.primary,
-                            borderRadius: BorderRadius.circular(8.r),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              if (event.isLive) ...[
-                                Icon(
-                                  Icons.circle,
-                                  color: Colors.white,
-                                  size: 8.sp,
-                                ),
-                                SizedBox(width: 4.w),
-                              ],
-                              Text(
-                                event.isLive ? 'LIVE NOW' : 'UPCOMING',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 10.sp,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        if (canLaunchStream) ...[
-                          SizedBox(width: 8.w),
-                          Container(
-                            padding: EdgeInsets.symmetric(
-                              horizontal: 8.w,
-                              vertical: 4.h,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: 0.2),
-                              borderRadius: BorderRadius.circular(6.r),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  Icons.play_circle_outline,
-                                  color: Colors.white,
-                                  size: 12.sp,
-                                ),
-                                SizedBox(width: 4.w),
-                                Text(
-                                  'Watch',
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 10.sp,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ],
-                    ),
-                    const Spacer(),
-                    Text(
-                      event.title,
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 20.sp,
-                        fontWeight: FontWeight.bold,
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    SizedBox(height: 8.h),
-                    if (event.description != null &&
-                        event.description!.isNotEmpty)
-                      Text(
-                        event.description!,
-                        style: TextStyle(
-                          color: Colors.white.withValues(alpha: 0.9),
-                          fontSize: 12.sp,
-                        ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ],
-      );
-    });
-  }
-
-  Widget _buildNoticeBanner() {
-    return Obx(() {
-      if (controller.announcements.isEmpty) {
-        return const SizedBox.shrink(); // Hide if no announcements
-      }
-      // ... content
-      final announcement = controller.announcements.first;
-
-      return Container(
-        width: double.infinity,
-        padding: EdgeInsets.all(16.w),
-        decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            colors: [Color(0xFFF97316), Color(0xFFEF4444)], // Orange to Red
-          ),
-          borderRadius: BorderRadius.circular(16.r),
-        ),
-        child: Row(
-          children: [
-            Container(
-              padding: EdgeInsets.all(10.w),
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.2),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(Icons.campaign, color: Colors.white, size: 24.sp),
-            ),
-            SizedBox(width: 16.w),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    announcement.title,
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 14.sp,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  SizedBox(height: 4.h),
-                  Text(
-                    announcement.content,
-                    style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.9),
-                      fontSize: 12.sp,
-                    ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
-              ),
-            ),
-            // ...
-          ],
-        ),
-      );
-    });
-  }
-
-  Widget _buildEventsList() {
-    return Obx(() {
-      if (controller.isLoading.value) {
-        return const Center(child: CircularProgressIndicator());
-      }
-
-      if (controller.upcomingEvents.isEmpty) {
-        return Center(
-          child: Text(
-            "No upcoming events",
-            style: TextStyle(color: AppTheme.textSecondary),
-          ),
-        );
-      }
-
-      return Column(
-        children: controller.upcomingEvents.map((event) {
-          final dateTime = DateTime.parse(event.startDate);
-          final month = _getMonthAbbreviation(dateTime.month);
-          final day = dateTime.day.toString();
-
-          return GestureDetector(
-            onTap: () => _showEventDetails(event),
-            child: Container(
-              margin: EdgeInsets.only(bottom: 16.h),
-              padding: EdgeInsets.all(16.w),
-              decoration: BoxDecoration(
-                color: AppTheme.surface,
-                borderRadius: BorderRadius.circular(16.r),
-                border: event.isLive
-                    ? Border.all(
-                        color: Colors.red.withValues(alpha: 0.5),
-                        width: 2,
-                      )
-                    : null,
-              ),
-              child: Row(
-                children: [
-                  Container(
-                    width: 50.w,
-                    padding: EdgeInsets.symmetric(vertical: 8.h),
-                    decoration: BoxDecoration(
-                      color: event.isLive
-                          ? Colors.red.withValues(alpha: 0.2)
-                          : AppTheme.background,
-                      borderRadius: BorderRadius.circular(12.r),
-                    ),
-                    child: Column(
-                      children: [
-                        Text(
-                          month,
-                          style: TextStyle(
-                            color: event.isLive ? Colors.red : AppTheme.primary,
-                            fontSize: 10.sp,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        SizedBox(height: 2.h),
-                        Text(
-                          day,
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 18.sp,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  SizedBox(width: 16.w),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Expanded(
-                              child: Text(
-                                event.title,
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 16.sp,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                            if (event.isLive) ...[
-                              SizedBox(width: 8.w),
-                              Container(
-                                padding: EdgeInsets.symmetric(
-                                  horizontal: 6.w,
-                                  vertical: 2.h,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: Colors.red,
-                                  borderRadius: BorderRadius.circular(4.r),
-                                ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Icon(
-                                      Icons.circle,
-                                      color: Colors.white,
-                                      size: 6.sp,
-                                    ),
-                                    SizedBox(width: 3.w),
-                                    Text(
-                                      'LIVE',
-                                      style: TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 9.sp,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          ],
-                        ),
-                        SizedBox(height: 4.h),
-                        Row(
-                          children: [
-                            Icon(
-                              Icons.access_time,
-                              color: AppTheme.textSecondary,
-                              size: 14.sp,
-                            ),
-                            SizedBox(width: 4.w),
-                            Text(
-                              _formatTime(dateTime),
-                              style: TextStyle(
-                                color: AppTheme.textSecondary,
-                                fontSize: 12.sp,
-                              ),
-                            ),
-                            if (event.location != null) ...[
-                              SizedBox(width: 12.w),
-                              Icon(
-                                Icons.place,
-                                color: AppTheme.textSecondary,
-                                size: 14.sp,
-                              ),
-                              SizedBox(width: 4.w),
-                              Expanded(
-                                child: Text(
-                                  event.location!,
-                                  style: TextStyle(
-                                    color: AppTheme.textSecondary,
-                                    fontSize: 12.sp,
-                                  ),
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                            ],
-                          ],
-                        ),
-                        if (event.description != null &&
-                            event.description!.isNotEmpty) ...[
-                          SizedBox(height: 8.h),
-                          Text(
-                            event.description!,
-                            style: TextStyle(
-                              color: AppTheme.textSecondary,
-                              fontSize: 12.sp,
-                            ),
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ],
-                      ],
-                    ),
-                  ),
-                  Icon(
-                    Icons.chevron_right,
-                    color: AppTheme.textSecondary,
-                    size: 20.sp,
-                  ),
-                ],
-              ),
-            ),
-          );
-        }).toList(),
-      );
-    });
-  }
-
-  void _showEventDetails(event) {
-    final dateTime = DateTime.parse(event.startDate);
-    final canLaunchStream =
-        event.isLive && event.liveUrl != null && event.liveUrl!.isNotEmpty;
-
-    Get.bottomSheet(
-      Container(
-        padding: EdgeInsets.all(24.w),
-        decoration: BoxDecoration(
-          color: AppTheme.surface,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24.r)),
-        ),
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Handle Drag Indicator
-              Center(
-                child: Container(
-                  width: 40.w,
-                  height: 4.h,
-                  margin: EdgeInsets.only(bottom: 24.h),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.2),
-                    borderRadius: BorderRadius.circular(2.r),
-                  ),
-                ),
-              ),
-
-              Text(
-                event.title,
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 24.sp,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              SizedBox(height: 16.h),
-              _buildDetailRow(
-                Icons.calendar_today,
-                DateFormat('EEEE, MMMM d, yyyy').format(dateTime),
-              ),
-              SizedBox(height: 12.h),
-              _buildDetailRow(
-                Icons.access_time,
-                DateFormat('h:mm a').format(dateTime),
-              ),
-              if (event.location != null) ...[
-                SizedBox(height: 12.h),
-                _buildDetailRow(Icons.place, event.location!),
-              ],
-              SizedBox(height: 24.h),
-              Text(
-                "Description",
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 18.sp,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              SizedBox(height: 8.h),
-              Text(
-                event.description ?? "No description available.",
-                style: TextStyle(
-                  color: AppTheme.textSecondary,
-                  fontSize: 14.sp,
-                  height: 1.5,
-                ),
-              ),
-              SizedBox(height: 32.h),
-              if (canLaunchStream)
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: () {
-                      Get.back();
-                      _launchURL(event.liveUrl!, title: event.title);
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.red,
-                      padding: EdgeInsets.symmetric(vertical: 16.h),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12.r),
-                      ),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.play_circle_fill,
-                          color: Colors.white,
-                          size: 20.sp,
-                        ),
-                        SizedBox(width: 8.w),
-                        Text(
-                          "Watch Live Stream",
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 16.sp,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-            ],
-          ),
-        ),
-      ),
-      isScrollControlled: true,
-    );
-  }
-
-  Widget _buildDetailRow(IconData icon, String text) {
-    return Row(
-      children: [
-        Container(
-          padding: EdgeInsets.all(8.w),
-          decoration: BoxDecoration(
-            color: AppTheme.primary.withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(8.r),
-          ),
-          child: Icon(icon, color: AppTheme.primary, size: 20.sp),
-        ),
-        SizedBox(width: 12.w),
-        Expanded(
-          child: Text(
-            text,
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 16.sp,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-        ),
-      ],
-    );
   }
 
   String _getMonthAbbreviation(int month) {
@@ -984,6 +902,15 @@ class HomeView extends GetView<HomeController> {
     try {
       final date = DateTime.parse(dateStr);
       return DateFormat('MMMM d, yyyy').format(date);
+    } catch (_) {
+      return dateStr;
+    }
+  }
+
+  String _formatDateTimeShort(String dateStr) {
+    try {
+      final date = DateTime.parse(dateStr);
+      return DateFormat('MMM d · h:mm a').format(date);
     } catch (_) {
       return dateStr;
     }

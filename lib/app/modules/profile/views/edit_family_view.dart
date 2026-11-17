@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/ui_kit.dart';
 import '../controllers/profile_controller.dart';
 
 class EditFamilyView extends StatefulWidget {
@@ -41,20 +42,14 @@ class _EditFamilyViewState extends State<EditFamilyView> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppTheme.background,
-      appBar: AppBar(
-        backgroundColor: AppTheme.background,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: () => Get.back(),
-        ),
-        title: const Text(
-          'Edit Family Details',
-          style: TextStyle(color: Colors.white),
-        ),
-        centerTitle: true,
+      appBar: glassAppBar(
+        'Edit Family Details',
+        onBack: () => Get.back(),
       ),
-      body: SingleChildScrollView(
+      body: AppBackground(
+        child: SafeArea(
+          top: false,
+          child: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
         child: Form(
           key: _formKey,
@@ -90,13 +85,10 @@ class _EditFamilyViewState extends State<EditFamilyView> {
               ),
               const SizedBox(height: 32),
               Obx(
-                () => SizedBox(
-                  width: double.infinity,
-                  height: 50,
-                  child: ElevatedButton(
-                    onPressed: _controller.isLoading.value
-                        ? null
-                        : () {
+                () => GradientButton(
+                  label: 'Save Changes',
+                  isLoading: _controller.isLoading.value,
+                  onPressed: () {
                             if (_formKey.currentState!.validate()) {
                               _controller.updateFamilyDetails(
                                 name: _nameController.text,
@@ -106,27 +98,12 @@ class _EditFamilyViewState extends State<EditFamilyView> {
                               );
                             }
                           },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppTheme.primary,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                    child: _controller.isLoading.value
-                        ? const CircularProgressIndicator(color: Colors.white)
-                        : const Text(
-                            'Save Changes',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
-                            ),
-                          ),
-                  ),
                 ),
               ),
             ],
           ),
+        ),
+      ),
         ),
       ),
     );
@@ -142,29 +119,11 @@ class _EditFamilyViewState extends State<EditFamilyView> {
   }) {
     return TextFormField(
       controller: controller,
-      style: const TextStyle(color: Colors.white),
+      style: AppTheme.body(fontSize: 15),
       keyboardType: keyboardType,
       maxLines: maxLines,
       validator: validator,
-      decoration: InputDecoration(
-        labelText: label,
-        labelStyle: const TextStyle(color: AppTheme.textSecondary),
-        prefixIcon: Icon(icon, color: AppTheme.textSecondary),
-        filled: true,
-        fillColor: AppTheme.surface,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide.none,
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide.none,
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: AppTheme.primary),
-        ),
-      ),
+      decoration: AppTheme.inputDecoration(label: label, icon: icon),
     );
   }
 }

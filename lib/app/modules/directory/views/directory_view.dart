@@ -4,6 +4,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:get/get.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/bottom_nav_bar.dart';
+import '../../../core/widgets/ui_kit.dart';
 import '../../../routes/app_pages.dart';
 import '../controllers/directory_controller.dart';
 import '../../../data/models/family_model.dart';
@@ -16,16 +17,19 @@ class DirectoryView extends GetView<DirectoryController> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppTheme.background,
-      body: SafeArea(
-        child: Column(
-          children: [
-            _buildHeader(),
-            SizedBox(height: 16.h),
-            _buildSearchBar(),
-            SizedBox(height: 16.h),
-            Expanded(child: _buildContent()),
-            const AppBottomNavBar(currentRoute: Routes.directory),
-          ],
+      body: AppBackground(
+        child: SafeArea(
+          bottom: false,
+          child: Column(
+            children: [
+              FadeSlideIn(child: _buildHeader()),
+              SizedBox(height: 16.h),
+              FadeSlideIn(index: 1, child: _buildSearchBar()),
+              SizedBox(height: 12.h),
+              Expanded(child: _buildContent()),
+              const AppBottomNavBar(currentRoute: Routes.directory),
+            ],
+          ),
         ),
       ),
     );
@@ -33,21 +37,29 @@ class DirectoryView extends GetView<DirectoryController> {
 
   Widget _buildHeader() {
     return Padding(
-      padding: EdgeInsets.fromLTRB(20.w, 24.h, 20.w, 0),
+      padding: EdgeInsets.fromLTRB(20.w, 16.h, 20.w, 0),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        crossAxisAlignment: CrossAxisAlignment.end,
         children: [
-          Text(
-            'Community Directory',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 24.sp,
-              fontWeight: FontWeight.bold,
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Directory', style: AppTheme.heading(fontSize: 30.sp)),
+                SizedBox(height: 4.h),
+                Text(
+                  'Our parish families, one tap away',
+                  style: AppTheme.body(
+                    fontSize: 13.sp,
+                    color: AppTheme.textSecondary,
+                  ),
+                ),
+              ],
             ),
           ),
-          IconButton(
-            icon: Icon(Icons.refresh, color: AppTheme.primary, size: 24.sp),
-            onPressed: () => controller.refresh(),
+          GlassIconButton(
+            icon: Icons.refresh_rounded,
+            onTap: () => controller.refresh(),
           ),
         ],
       ),
@@ -57,35 +69,15 @@ class DirectoryView extends GetView<DirectoryController> {
   Widget _buildSearchBar() {
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: 20.w),
-      child: Container(
-        padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
-        decoration: BoxDecoration(
-          color: AppTheme.surface,
-          borderRadius: BorderRadius.circular(12.r),
-          border: Border.all(color: AppTheme.surface, width: 1),
+      child: TextField(
+        style: AppTheme.body(fontSize: 14.sp),
+        cursorColor: AppTheme.primary,
+        textInputAction: TextInputAction.search,
+        decoration: AppTheme.inputDecoration(
+          hint: 'Search names, houses, families…',
+          icon: Icons.search_rounded,
         ),
-        child: Row(
-          children: [
-            Icon(Icons.search, color: AppTheme.textSecondary, size: 20.sp),
-            SizedBox(width: 12.w),
-            Expanded(
-              child: TextField(
-                style: TextStyle(color: Colors.white, fontSize: 14.sp),
-                decoration: InputDecoration(
-                  hintText: 'Search community...',
-                  hintStyle: TextStyle(
-                    color: AppTheme.textSecondary,
-                    fontSize: 14.sp,
-                  ),
-                  border: InputBorder.none,
-                  isDense: true,
-                  contentPadding: EdgeInsets.zero,
-                ),
-                onChanged: (value) => controller.searchDirectory(value),
-              ),
-            ),
-          ],
-        ),
+        onChanged: (value) => controller.searchDirectory(value),
       ),
     );
   }
@@ -93,38 +85,46 @@ class DirectoryView extends GetView<DirectoryController> {
   Widget _buildContent() {
     return Obx(() {
       if (controller.isLoading.value) {
-        return const Center(child: CircularProgressIndicator());
+        return const AppLoader();
       }
 
       if (controller.families.isEmpty) {
-        return Center(
-          child: Text(
-            controller.searchQuery.value.isEmpty
-                ? 'No families found'
-                : 'No results for "${controller.searchQuery.value}"',
-            style: TextStyle(color: AppTheme.textSecondary, fontSize: 14.sp),
-          ),
+        return EmptyState(
+          icon: controller.searchQuery.value.isEmpty
+              ? Icons.groups_outlined
+              : Icons.search_off_rounded,
+          message: controller.searchQuery.value.isEmpty
+              ? 'No families found'
+              : 'No results for "${controller.searchQuery.value}"',
         );
       }
 
-      return ListView.builder(
-        controller: controller.scrollController,
-        padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 8.h),
-        itemCount:
-            controller.families.length + (controller.isLoadMore.value ? 1 : 0),
-        itemBuilder: (context, index) {
-          if (index == controller.families.length) {
-            return Center(
-              child: Padding(
-                padding: EdgeInsets.all(16.h),
-                child: const CircularProgressIndicator(),
-              ),
-            );
-          }
+      return RefreshIndicator(
+        color: AppTheme.primary,
+        backgroundColor: AppTheme.surface,
+        onRefresh: () => controller.fetchDirectory(isRefresh: true),
+        child: ListView.builder(
+          controller: controller.scrollController,
+          physics: const AlwaysScrollableScrollPhysics(
+            parent: BouncingScrollPhysics(),
+          ),
+          keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+          padding: EdgeInsets.fromLTRB(20.w, 8.h, 20.w, 16.h),
+          itemCount:
+              controller.families.length +
+              (controller.isLoadMore.value ? 1 : 0),
+          itemBuilder: (context, index) {
+            if (index == controller.families.length) {
+              return const AppLoader();
+            }
 
-          final family = controller.families[index];
-          return _buildFamilyCard(family);
-        },
+            final family = controller.families[index];
+            return FadeSlideIn(
+              index: index % 8,
+              child: _buildFamilyCard(family),
+            );
+          },
+        ),
       );
     });
   }
@@ -178,44 +178,79 @@ class DirectoryView extends GetView<DirectoryController> {
     if (headerText.isEmpty) headerText = 'Family';
 
     return Container(
-      margin: EdgeInsets.only(bottom: 16.h),
+      margin: EdgeInsets.only(bottom: 12.h),
       decoration: BoxDecoration(
-        color: AppTheme.surface,
-        borderRadius: BorderRadius.circular(12.r),
-        border: Border.all(color: AppTheme.surface, width: 1),
+        color: AppTheme.glass,
+        borderRadius: BorderRadius.circular(20.r),
+        border: Border.all(color: AppTheme.glassBorder),
       ),
       child: Theme(
-        data: Theme.of(Get.context!).copyWith(dividerColor: Colors.transparent),
+        data: Theme.of(Get.context!).copyWith(
+          dividerColor: Colors.transparent,
+          splashColor: Colors.transparent,
+          highlightColor: Colors.transparent,
+        ),
         child: ExpansionTile(
-          tilePadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
-          childrenPadding: EdgeInsets.zero,
-          trailing: otherMembers.isEmpty
-              ? const SizedBox.shrink()
-              : Icon(Icons.keyboard_arrow_down, color: AppTheme.primary),
+          tilePadding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 6.h),
+          childrenPadding: EdgeInsets.only(bottom: 6.h),
+          shape: const Border(),
+          collapsedShape: const Border(),
+          iconColor: AppTheme.accent,
+          collapsedIconColor: AppTheme.accent,
+          trailing: otherMembers.isEmpty ? const SizedBox.shrink() : null,
           title: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Top Label
               Row(
                 children: [
-                  Icon(Icons.home, size: 12.sp, color: AppTheme.primary),
-                  SizedBox(width: 6.w),
-                  Expanded(
-                    child: Text(
-                      headerText,
-                      style: TextStyle(
-                        color: AppTheme.textSecondary,
-                        fontSize: 12.sp,
-                        fontWeight: FontWeight.w600,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
+                  Container(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 8.w,
+                      vertical: 3.h,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppTheme.accent.withValues(alpha: 0.14),
+                      borderRadius: BorderRadius.circular(20.r),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.home_rounded,
+                          size: 12.sp,
+                          color: AppTheme.accent,
+                        ),
+                        SizedBox(width: 5.w),
+                        ConstrainedBox(
+                          constraints: BoxConstraints(maxWidth: 190.w),
+                          child: Text(
+                            headerText,
+                            style: AppTheme.body(
+                              color: AppTheme.accent,
+                              fontSize: 11.sp,
+                              fontWeight: FontWeight.w600,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
+                  if (otherMembers.isNotEmpty) ...[
+                    SizedBox(width: 8.w),
+                    Text(
+                      '+${otherMembers.length}',
+                      style: AppTheme.body(
+                        fontSize: 11.sp,
+                        color: AppTheme.textSecondary,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
                 ],
               ),
               SizedBox(height: 12.h),
-              // Head Details
               _buildHeadDetails(head),
             ],
           ),
@@ -225,37 +260,50 @@ class DirectoryView extends GetView<DirectoryController> {
     );
   }
 
-  Widget _buildHeadDetails(MemberModel head) {
-    return Row(
-      children: [
-        Container(
-          width: 50.r,
-          height: 50.r,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(12.r),
-            image: head.profileImage != null
-                ? DecorationImage(
-                    image: NetworkImage(head.profileImage!),
-                    fit: BoxFit.cover,
-                  )
-                : null,
-            color: head.profileImage == null
-                ? AppTheme.primary.withValues(alpha: 0.2)
-                : null,
-          ),
-          child: head.profileImage == null
-              ? Center(
-                  child: Text(
-                    head.name?.substring(0, 1).toUpperCase() ?? '?',
-                    style: TextStyle(
-                      color: AppTheme.primary,
-                      fontSize: 20.sp,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
+  String _initial(String? name) {
+    final n = name?.trim() ?? '';
+    return n.isEmpty ? '?' : n.substring(0, 1).toUpperCase();
+  }
+
+  Widget _avatar(MemberModel member, double size) {
+    final hasImage =
+        member.profileImage != null && member.profileImage!.isNotEmpty;
+    return Container(
+      width: size,
+      height: size,
+      padding: const EdgeInsets.all(2),
+      decoration: BoxDecoration(
+        gradient: AppTheme.primaryGradient,
+        borderRadius: BorderRadius.circular(size * 0.32),
+      ),
+      child: Container(
+        decoration: BoxDecoration(
+          color: AppTheme.surface,
+          borderRadius: BorderRadius.circular(size * 0.28),
+          image: hasImage
+              ? DecorationImage(
+                  image: NetworkImage(member.profileImage!),
+                  fit: BoxFit.cover,
                 )
               : null,
         ),
+        alignment: Alignment.center,
+        child: hasImage
+            ? null
+            : GradientMask(
+                child: Text(
+                  _initial(member.name),
+                  style: AppTheme.heading(fontSize: size * 0.4),
+                ),
+              ),
+      ),
+    );
+  }
+
+  Widget _buildHeadDetails(MemberModel head) {
+    return Row(
+      children: [
+        _avatar(head, 52.r),
         SizedBox(width: 12.w),
         Expanded(
           child: Column(
@@ -263,18 +311,35 @@ class DirectoryView extends GetView<DirectoryController> {
             children: [
               Text(
                 head.name ?? 'Unknown',
-                style: TextStyle(
-                  color: Colors.white,
+                style: AppTheme.body(
                   fontSize: 16.sp,
-                  fontWeight: FontWeight.bold,
+                  fontWeight: FontWeight.w700,
                 ),
               ),
+              SizedBox(height: 3.h),
+              Row(
+                children: [
+                  Icon(
+                    Icons.star_rounded,
+                    size: 12.sp,
+                    color: AppTheme.accent,
+                  ),
+                  SizedBox(width: 3.w),
+                  Text(
+                    'Head of family',
+                    style: AppTheme.body(
+                      color: AppTheme.textSecondary,
+                      fontSize: 11.sp,
+                    ),
+                  ),
+                ],
+              ),
               if (head.phone != null) ...[
-                SizedBox(height: 4.h),
+                SizedBox(height: 2.h),
                 Text(
                   head.phone!,
-                  style: TextStyle(
-                    color: AppTheme.textSecondary,
+                  style: AppTheme.body(
+                    color: AppTheme.textMuted,
                     fontSize: 12.sp,
                   ),
                 ),
@@ -283,89 +348,63 @@ class DirectoryView extends GetView<DirectoryController> {
           ),
         ),
         if (head.phone != null && head.phone!.isNotEmpty)
-          _buildActionButton(Icons.phone, () async {
-            final Uri launchUri = Uri(
-              scheme: 'tel',
-              path: head.phone!,
-            );
-            if (await canLaunchUrl(launchUri)) {
-              await launchUrl(launchUri);
-            }
-          }),
+          _buildActionButton(Icons.call_rounded, () => _call(head.phone!)),
       ],
     );
   }
 
   Widget _buildMemberTile(MemberModel member) {
-    return Container(
-      padding: EdgeInsets.fromLTRB(16.w, 4.h, 16.w, 16.h),
-      child: Row(
-        children: [
-          Container(
-            width: 40.r,
-            height: 40.r,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(10.r),
-              image: member.profileImage != null
-                  ? DecorationImage(
-                      image: NetworkImage(member.profileImage!),
-                      fit: BoxFit.cover,
-                    )
-                  : null,
-              color: member.profileImage == null
-                  ? AppTheme.primary.withValues(alpha: 0.2)
-                  : null,
-            ),
-            child: member.profileImage == null
-                ? Center(
-                    child: Text(
-                      member.name?.substring(0, 1).toUpperCase() ?? '?',
-                      style: TextStyle(
-                        color: AppTheme.primary,
-                        fontSize: 16.sp,
-                        fontWeight: FontWeight.bold,
-                      ),
+    return Padding(
+      padding: EdgeInsets.fromLTRB(14.w, 4.h, 14.w, 8.h),
+      child: Container(
+        padding: EdgeInsets.all(10.w),
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.04),
+          borderRadius: BorderRadius.circular(16.r),
+        ),
+        child: Row(
+          children: [
+            _avatar(member, 40.r),
+            SizedBox(width: 12.w),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    member.name ?? 'Unknown',
+                    style: AppTheme.body(
+                      fontSize: 14.sp,
+                      fontWeight: FontWeight.w600,
                     ),
-                  )
-                : null,
-          ),
-          SizedBox(width: 12.w),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  member.name ?? 'Unknown',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 14.sp,
-                    fontWeight: FontWeight.bold,
                   ),
-                ),
-                SizedBox(height: 2.h),
-                Text(
-                  member.familyRole ?? 'Member',
-                  style: TextStyle(
-                    color: AppTheme.textSecondary,
-                    fontSize: 12.sp,
+                  SizedBox(height: 2.h),
+                  Text(
+                    member.familyRole ?? 'Member',
+                    style: AppTheme.body(
+                      color: AppTheme.textSecondary,
+                      fontSize: 12.sp,
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-          if (member.phone != null && member.phone!.isNotEmpty)
-            _buildActionButton(Icons.phone, () async {
-              final Uri launchUri = Uri(
-                scheme: 'tel',
-                path: member.phone!,
-              );
-              if (await canLaunchUrl(launchUri)) {
-                await launchUrl(launchUri);
-              }
-            }, isGhost: true),
-        ],
+            if (member.phone != null && member.phone!.isNotEmpty)
+              _buildActionButton(
+                Icons.call_rounded,
+                () => _call(member.phone!),
+                isGhost: true,
+              ),
+          ],
+        ),
       ),
     );
+  }
+
+  Future<void> _call(String phone) async {
+    final Uri launchUri = Uri(scheme: 'tel', path: phone);
+    if (await canLaunchUrl(launchUri)) {
+      await launchUrl(launchUri);
+    }
   }
 
   Widget _buildActionButton(
@@ -373,20 +412,21 @@ class DirectoryView extends GetView<DirectoryController> {
     VoidCallback onTap, {
     bool isGhost = false,
   }) {
-    return GestureDetector(
+    return PressableScale(
       onTap: onTap,
       child: Container(
-        padding: EdgeInsets.all(8.w),
+        width: isGhost ? 36.r : 42.r,
+        height: isGhost ? 36.r : 42.r,
         decoration: BoxDecoration(
-          color: isGhost
-              ? Colors.transparent
-              : AppTheme.textSecondary.withValues(alpha: 0.1),
+          gradient: isGhost ? null : AppTheme.primaryGradient,
+          color: isGhost ? AppTheme.accent.withValues(alpha: 0.12) : null,
           shape: BoxShape.circle,
+          boxShadow: isGhost ? null : AppTheme.glow(AppTheme.secondary, 0.3),
         ),
         child: Icon(
           icon,
-          color: isGhost ? AppTheme.textSecondary : AppTheme.primary,
-          size: 18.sp,
+          color: isGhost ? AppTheme.accent : Colors.white,
+          size: isGhost ? 17.sp : 20.sp,
         ),
       ),
     );

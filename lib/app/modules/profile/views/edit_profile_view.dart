@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/ui_kit.dart';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
 import '../../../core/utils/image_helper.dart';
@@ -62,20 +63,14 @@ class _EditProfileViewState extends State<EditProfileView> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppTheme.background,
-      appBar: AppBar(
-        backgroundColor: AppTheme.background,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: () => Get.back(),
-        ),
-        title: const Text(
-          'Edit Profile',
-          style: TextStyle(color: Colors.white),
-        ),
-        centerTitle: true,
+      appBar: glassAppBar(
+        'Edit Profile',
+        onBack: () => Get.back(),
       ),
-      body: SingleChildScrollView(
+      body: AppBackground(
+        child: SafeArea(
+          top: false,
+          child: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
         child: Form(
           key: _formKey,
@@ -86,9 +81,11 @@ class _EditProfileViewState extends State<EditProfileView> {
                 child: Stack(
                   children: [
                     Container(
+                      padding: const EdgeInsets.all(3),
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        border: Border.all(color: AppTheme.surface, width: 4),
+                        gradient: AppTheme.primaryGradient,
+                        boxShadow: AppTheme.glow(AppTheme.secondary, 0.35),
                       ),
                       child: CircleAvatar(
                         radius: 50,
@@ -123,12 +120,13 @@ class _EditProfileViewState extends State<EditProfileView> {
                       bottom: 0,
                       child: Container(
                         padding: const EdgeInsets.all(8),
-                        decoration: const BoxDecoration(
-                          color: AppTheme.primary,
+                        decoration: BoxDecoration(
+                          gradient: AppTheme.primaryGradient,
                           shape: BoxShape.circle,
+                          border: Border.all(color: AppTheme.background, width: 3),
                         ),
                         child: const Icon(
-                          Icons.camera_alt,
+                          Icons.photo_camera_rounded,
                           color: Colors.white,
                           size: 18,
                         ),
@@ -170,13 +168,10 @@ class _EditProfileViewState extends State<EditProfileView> {
               ),
               const SizedBox(height: 32),
               Obx(
-                () => SizedBox(
-                  width: double.infinity,
-                  height: 50,
-                  child: ElevatedButton(
-                    onPressed: _controller.isLoading.value
-                        ? null
-                        : () {
+                () => GradientButton(
+                  label: 'Save Changes',
+                  isLoading: _controller.isLoading.value,
+                  onPressed: () {
                             if (_formKey.currentState!.validate()) {
                               _controller.updateProfile(
                                 name: _nameController.text,
@@ -187,27 +182,12 @@ class _EditProfileViewState extends State<EditProfileView> {
                               );
                             }
                           },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppTheme.primary,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                    child: _controller.isLoading.value
-                        ? const CircularProgressIndicator(color: Colors.white)
-                        : const Text(
-                            'Save Changes',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
-                            ),
-                          ),
-                  ),
                 ),
               ),
             ],
           ),
+        ),
+      ),
         ),
       ),
     );
@@ -223,29 +203,11 @@ class _EditProfileViewState extends State<EditProfileView> {
   }) {
     return TextFormField(
       controller: controller,
-      style: const TextStyle(color: Colors.white),
+      style: AppTheme.body(fontSize: 15),
       keyboardType: keyboardType,
       maxLines: maxLines,
       validator: validator,
-      decoration: InputDecoration(
-        labelText: label,
-        labelStyle: const TextStyle(color: AppTheme.textSecondary),
-        prefixIcon: Icon(icon, color: AppTheme.textSecondary),
-        filled: true,
-        fillColor: AppTheme.surface,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide.none,
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide.none,
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: AppTheme.primary),
-        ),
-      ),
+      decoration: AppTheme.inputDecoration(label: label, icon: icon),
     );
   }
 }
