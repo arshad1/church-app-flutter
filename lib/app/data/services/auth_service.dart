@@ -11,20 +11,32 @@ class AuthService extends GetxService {
   String? get token => _storage.read('token');
   dynamic get user => _storage.read('user');
 
+  /// Returns [value] if it is a non-empty string, otherwise null.
+  static String? _text(dynamic value) =>
+      value is String && value.trim().isNotEmpty ? value.trim() : null;
+
+  /// The logged-in member's name.
+  ///
+  /// Priority: member.name (from /mobile/profile, the member's real name),
+  /// then fullName / name from the login response.
   String get userName {
     final u = user;
-    if (u == null) return "Guest";
-
-    // Priority: fullName (from Login), then member.name (from Profile)
-    return u['fullName'] ?? u['member']?['name'] ?? "Member";
+    if (u is! Map) return 'Guest';
+    final member = u['member'];
+    return _text(member is Map ? member['name'] : null) ??
+        _text(u['fullName']) ??
+        _text(u['name']) ??
+        _text(member is Map ? member['fullName'] : null) ??
+        'Member';
   }
 
   String? get userImage {
     final u = user;
-    if (u == null) return null;
-
-    // Priority: profilePic (from Login), then member.profileImage (from Profile)
-    return u['profilePic'] ?? u['member']?['profileImage'];
+    if (u is! Map) return null;
+    final member = u['member'];
+    // Priority: member.profileImage (from Profile), then profilePic (Login)
+    return _text(member is Map ? member['profileImage'] : null) ??
+        _text(u['profilePic']);
   }
 
   Future<dynamic> login(String email, String password) async {

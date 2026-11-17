@@ -3,7 +3,6 @@ import 'package:get/get.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/ui_kit.dart';
 import '../../../core/utils/image_helper.dart';
-import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 import '../controllers/profile_controller.dart';
 
@@ -28,17 +27,12 @@ class _AddFamilyMemberViewState extends State<AddFamilyMemberView> {
   int? _selectedSpouseId;
 
   File? _selectedImage;
-  final ImagePicker _picker = ImagePicker();
 
+  /// Camera or gallery → crop → compress (with error messages).
   Future<void> _pickImage() async {
-    final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
-    if (image != null) {
-      final processedImage = await ImageHelper.processImage(File(image.path));
-      if (processedImage != null) {
-        setState(() {
-          _selectedImage = processedImage;
-        });
-      }
+    final file = await ImageHelper.pickProfilePhoto();
+    if (file != null && mounted) {
+      setState(() => _selectedImage = file);
     }
   }
 

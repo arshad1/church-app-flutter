@@ -1,7 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:image_picker/image_picker.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/ui_kit.dart';
 import '../../../data/models/member_model.dart';
@@ -23,7 +22,6 @@ class _EditFamilyMemberViewState extends State<EditFamilyMemberView> {
   final ProfileController _controller = Get.find<ProfileController>();
   File? _selectedImage;
   int? _selectedSpouseId;
-  final ImagePicker _picker = ImagePicker();
 
   @override
   void initState() {
@@ -33,15 +31,11 @@ class _EditFamilyMemberViewState extends State<EditFamilyMemberView> {
     _selectedSpouseId = widget.member.spouseId;
   }
 
+  /// Camera or gallery → crop → compress (with error messages).
   Future<void> _pickImage() async {
-    final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
-    if (image != null) {
-      final processedImage = await ImageHelper.processImage(File(image.path));
-      if (processedImage != null) {
-        setState(() {
-          _selectedImage = processedImage;
-        });
-      }
+    final file = await ImageHelper.pickProfilePhoto();
+    if (file != null && mounted) {
+      setState(() => _selectedImage = file);
     }
   }
 
@@ -69,9 +63,10 @@ class _EditFamilyMemberViewState extends State<EditFamilyMemberView> {
                 confirmTextColor: Colors.white,
                 buttonColor: AppTheme.live,
                 onConfirm: () {
-                  Get.back(); // Close dialog
+                  final navigator = Navigator.of(context);
+                  navigator.pop(); // Close dialog
+                  navigator.pop(); // Close edit screen
                   _controller.deleteFamilyMember(widget.member.id!);
-                  Get.back(); // Close edit screen (managed by controller but safe here)
                 },
               );
             },

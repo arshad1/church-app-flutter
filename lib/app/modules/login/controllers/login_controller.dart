@@ -59,6 +59,10 @@ class LoginController extends GetxController {
       await _storage.write('token', token);
       await _storage.write('user', user);
 
+      // The login response may not include the member's name, so load the
+      // full profile (user + member) before showing Home.
+      await _authService.refreshUser();
+
       // Navigate to Landing Page
       Get.offAllNamed(Routes.home);
     } catch (e) {

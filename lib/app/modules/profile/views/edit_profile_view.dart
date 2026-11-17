@@ -3,7 +3,6 @@ import 'package:get/get.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/ui_kit.dart';
 import 'dart:io';
-import 'package:image_picker/image_picker.dart';
 import '../../../core/utils/image_helper.dart';
 import '../controllers/profile_controller.dart';
 
@@ -22,7 +21,6 @@ class _EditProfileViewState extends State<EditProfileView> {
   late TextEditingController _addressController;
   final ProfileController _controller = Get.find<ProfileController>();
   File? _selectedImage;
-  final ImagePicker _picker = ImagePicker();
 
   @override
   void initState() {
@@ -38,15 +36,11 @@ class _EditProfileViewState extends State<EditProfileView> {
     );
   }
 
+  /// Camera or gallery → crop → compress (with error messages).
   Future<void> _pickImage() async {
-    final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
-    if (image != null) {
-      final processedImage = await ImageHelper.processImage(File(image.path));
-      if (processedImage != null) {
-        setState(() {
-          _selectedImage = processedImage;
-        });
-      }
+    final file = await ImageHelper.pickProfilePhoto();
+    if (file != null && mounted) {
+      setState(() => _selectedImage = file);
     }
   }
 
@@ -149,8 +143,12 @@ class _EditProfileViewState extends State<EditProfileView> {
                 label: 'Email Address',
                 icon: Icons.email,
                 keyboardType: TextInputType.emailAddress,
-                validator: (v) =>
-                    v == null || !GetUtils.isEmail(v) ? 'Invalid email' : null,
+                // Optional: members who log in with a username may have none.
+                validator: (v) {
+                  final value = v?.trim() ?? '';
+                  if (value.isEmpty || GetUtils.isEmail(value)) return null;
+                  return 'Please enter a valid email';
+                },
               ),
               const SizedBox(height: 16),
               _buildTextField(

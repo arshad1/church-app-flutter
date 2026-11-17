@@ -132,11 +132,13 @@ class HomeView extends GetView<HomeController> {
                 ),
               ),
               SizedBox(height: 2.h),
-              Text(
-                controller.userName,
-                style: AppTheme.heading(fontSize: 20.sp),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
+              Obx(
+                () => Text(
+                  controller.userName.value,
+                  style: AppTheme.heading(fontSize: 20.sp),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
             ],
           ),

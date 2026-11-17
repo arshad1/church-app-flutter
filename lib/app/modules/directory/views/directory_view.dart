@@ -130,9 +130,21 @@ class DirectoryView extends GetView<DirectoryController> {
   }
 
   Widget _buildFamilyCard(FamilyModel family) {
+    final query = controller.searchQuery.value.trim();
+
     if (family.houses != null && family.houses!.isNotEmpty) {
+      var houses = family.houses!;
+      // While searching, show only the houses that matched — unless the
+      // family name itself matched, then show the whole family.
+      if (query.isNotEmpty &&
+          !DirectoryController.familyNameMatches(family, query)) {
+        final matched = houses
+            .where((h) => DirectoryController.houseMatches(h, query))
+            .toList();
+        if (matched.isNotEmpty) houses = matched;
+      }
       return Column(
-        children: family.houses!.map((house) {
+        children: houses.map((house) {
           return _buildHouseholdItem(
             members: house.members ?? [],
             houseName: house.name,
@@ -167,6 +179,13 @@ class DirectoryView extends GetView<DirectoryController> {
 
     final otherMembers = members.where((m) => m.id != head!.id).toList();
 
+    // Open the household automatically when the search matched one of its
+    // other members, so the match is visible straight away.
+    final query = controller.searchQuery.value.trim().toLowerCase();
+    final expandForSearch =
+        query.isNotEmpty &&
+        otherMembers.any((m) => DirectoryController.memberMatches(m, query));
+
     // Header Text Logic
     final houseStr = houseName?.trim() ?? '';
     final familyStr = familyName?.trim() ?? '';
@@ -191,6 +210,8 @@ class DirectoryView extends GetView<DirectoryController> {
           highlightColor: Colors.transparent,
         ),
         child: ExpansionTile(
+          key: ValueKey('${head.id}-$houseName-$query'),
+          initiallyExpanded: expandForSearch,
           tilePadding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 6.h),
           childrenPadding: EdgeInsets.only(bottom: 6.h),
           shape: const Border(),

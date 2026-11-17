@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/ui_kit.dart';
+import '../../../core/utils/image_helper.dart';
 import '../../../data/models/member_model.dart';
 import '../../../core/widgets/bottom_nav_bar.dart';
 import '../../../routes/app_pages.dart';
@@ -189,6 +190,12 @@ class ProfileView extends GetView<ProfileController> {
     );
   }
 
+  Future<void> _changePhoto() async {
+    if (controller.isUploadingPhoto.value) return;
+    final file = await ImageHelper.pickProfilePhoto();
+    if (file != null) await controller.updateProfilePhoto(file);
+  }
+
   Widget _buildProfileHeader(MemberModel member) {
     final hasImage =
         member.profileImage != null && member.profileImage!.isNotEmpty;
@@ -198,8 +205,10 @@ class ProfileView extends GetView<ProfileController> {
         Stack(
           clipBehavior: Clip.none,
           children: [
-            // Gradient ring with soft glow
-            Container(
+            // Gradient ring with soft glow — tap to change the photo
+            PressableScale(
+              onTap: _changePhoto,
+              child: Container(
               padding: const EdgeInsets.all(3.5),
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
@@ -219,25 +228,58 @@ class ProfileView extends GetView<ProfileController> {
                   shape: BoxShape.circle,
                   color: AppTheme.background,
                 ),
-                child: CircleAvatar(
-                  radius: 50,
-                  backgroundColor: AppTheme.surface,
-                  backgroundImage: hasImage
-                      ? NetworkImage(member.profileImage!)
-                      : null,
-                  child: hasImage
-                      ? null
-                      : const GradientMask(
-                          child: Icon(Icons.person_rounded, size: 54),
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    CircleAvatar(
+                      radius: 50,
+                      backgroundColor: AppTheme.surface,
+                      backgroundImage: hasImage
+                          ? NetworkImage(member.profileImage!)
+                          : null,
+                      child: hasImage
+                          ? null
+                          : const GradientMask(
+                              child: Icon(Icons.person_rounded, size: 54),
+                            ),
+                    ),
+                    // Upload progress overlay
+                    Obx(
+                      () => AnimatedOpacity(
+                        duration: const Duration(milliseconds: 250),
+                        opacity: controller.isUploadingPhoto.value ? 1 : 0,
+                        child: Container(
+                          width: 100,
+                          height: 100,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: AppTheme.background.withValues(alpha: 0.6),
+                          ),
+                          child: controller.isUploadingPhoto.value
+                              ? const Center(
+                                  child: SizedBox(
+                                    width: 30,
+                                    height: 30,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 3,
+                                      color: AppTheme.accent,
+                                    ),
+                                  ),
+                                )
+                              : null,
                         ),
+                      ),
+                    ),
+                  ],
                 ),
+              ),
               ),
             ),
             Positioned(
               right: 2,
               bottom: 2,
               child: PressableScale(
-                onTap: () => Get.to(() => const EditProfileView()),
+                onTap: _changePhoto,
                 child: Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
@@ -246,7 +288,7 @@ class ProfileView extends GetView<ProfileController> {
                     border: Border.all(color: AppTheme.background, width: 3),
                   ),
                   child: const Icon(
-                    Icons.edit_rounded,
+                    Icons.photo_camera_rounded,
                     color: Colors.white,
                     size: 15,
                   ),
@@ -328,6 +370,32 @@ class ProfileView extends GetView<ProfileController> {
                 ),
               ),
           ],
+        ),
+        const SizedBox(height: 14),
+        PressableScale(
+          onTap: () => Get.to(() => const EditProfileView()),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 9),
+            decoration: BoxDecoration(
+              gradient: AppTheme.primaryGradient,
+              borderRadius: BorderRadius.circular(22),
+              boxShadow: AppTheme.glow(AppTheme.secondary, 0.3),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.edit_rounded, color: Colors.white, size: 15),
+                const SizedBox(width: 6),
+                Text(
+                  'Edit Profile',
+                  style: AppTheme.body(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
       ],
     );

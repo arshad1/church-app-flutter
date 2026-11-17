@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:dio/dio.dart' show DioException;
 import 'package:get/get.dart';
 import '../../../data/models/user_model.dart';
 import '../../../data/services/user_service.dart';
@@ -19,6 +20,41 @@ class ProfileController extends GetxController {
   final Rx<UserModel?> user = Rx<UserModel?>(null);
   final RxBool isLoading = false.obs;
 
+  /// True while a new profile photo is uploading (shown on the avatar).
+  final RxBool isUploadingPhoto = false.obs;
+
+  /// Closes the current screen. Uses the navigator directly because
+  /// Get.back() only dismisses a snackbar when one is showing.
+  void _closeScreen() => Get.key.currentState?.maybePop();
+
+  void _success(String message) => Get.snackbar(
+    'Success',
+    message,
+    snackPosition: SnackPosition.BOTTOM,
+    backgroundColor: const Color(0xFF16A34A),
+    colorText: Colors.white,
+    margin: const EdgeInsets.all(12),
+  );
+
+  void _failure(String message, Object error) => Get.snackbar(
+    'Error',
+    '$message: ${_readable(error)}',
+    snackPosition: SnackPosition.BOTTOM,
+    backgroundColor: const Color(0xFFDC2626),
+    colorText: Colors.white,
+    margin: const EdgeInsets.all(12),
+  );
+
+  /// Shows the server's message for API errors instead of a raw exception.
+  static String _readable(Object e) {
+    if (e is DioException) {
+      final data = e.response?.data;
+      if (data is Map && data['message'] is String) return data['message'];
+      return e.message ?? 'Network error';
+    }
+    return e.toString().replaceFirst('Exception: ', '');
+  }
+
   Rx<SettingsModel?> get churchSettings => _settingsService.settings;
 
   @override
@@ -28,19 +64,46 @@ class ProfileController extends GetxController {
     _settingsService.fetchSettings();
   }
 
-  Future<void> fetchProfile() async {
-    isLoading.value = true;
+  /// Loads the profile. With [silent], the page keeps showing the current
+  /// data while refreshing instead of switching to a spinner.
+  Future<void> fetchProfile({bool silent = false}) async {
+    if (!silent) isLoading.value = true;
     try {
       user.value = await _userService.getUserProfile();
     } catch (e) {
-      Get.snackbar(
-        'Error',
-        'Failed to load profile: $e',
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
+      _failure('Failed to load profile', e);
     } finally {
-      isLoading.value = false;
+      if (!silent) isLoading.value = false;
+    }
+  }
+
+  /// Uploads [file] as the logged-in member's photo and saves it.
+  Future<void> updateProfilePhoto(File file) async {
+    final member = user.value?.member;
+    if (member?.id == null) {
+      _failure('Could not update photo', 'Member ID not found');
+      return;
+    }
+
+    isUploadingPhoto.value = true;
+    try {
+      final imageUrl = await _uploadService.uploadImage(file);
+      await _familyService.updateFamilyMember(member!.id!, {
+        if (member.name != null) 'name': member.name,
+        if (member.phone != null) 'phone': member.phone,
+        'profileImage': imageUrl,
+      });
+
+      // Show the new photo straight away, then sync with the server.
+      member.profileImage = imageUrl;
+      user.refresh();
+      await _authService.refreshUser(); // updates the Home header too
+      await fetchProfile(silent: true);
+      _success('Profile photo updated');
+    } catch (e) {
+      _failure('Failed to update photo', e);
+    } finally {
+      isUploadingPhoto.value = false;
     }
   }
 
@@ -51,21 +114,11 @@ class ProfileController extends GetxController {
     isLoading.value = true;
     try {
       await _familyService.addFamilyMember(data, imageFile);
-      Get.back(); // Close the add member screen
-      Get.snackbar(
-        'Success',
-        'Family member added successfully',
-        backgroundColor: Colors.green,
-        colorText: Colors.white,
-      );
-      fetchProfile(); // Refresh profile to show new member
+      _closeScreen(); // Close the add member screen
+      _success('Family member added successfully');
+      fetchProfile(silent: true); // Refresh profile to show new member
     } catch (e) {
-      Get.snackbar(
-        'Error',
-        'Failed to add family member: $e',
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
+      _failure('Failed to add family member', e);
     } finally {
       isLoading.value = false;
     }
@@ -80,18 +133,15 @@ class ProfileController extends GetxController {
   }) async {
     final memberId = user.value?.member?.id;
     if (memberId == null) {
-      Get.snackbar(
-        'Error',
-        'Member ID not found',
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
+      _failure('Could not update profile', 'Member ID not found');
       return;
     }
 
     isLoading.value = true;
     try {
       // 1. Update User Profile (Email) if changed
+      email = email?.trim();
+      address = address?.trim();
       if (email != null && email.isNotEmpty && email != user.value?.email) {
         await _userService.updateUserProfile({'email': email});
       }
@@ -111,28 +161,18 @@ class ProfileController extends GetxController {
       }
 
       await _familyService.updateFamilyMember(memberId, {
-        'name': name,
-        'phone': phone,
+        'name': name.trim(),
+        'phone': phone.trim(),
         if (imageUrl != null) 'profileImage': imageUrl,
       });
 
-      Get.back(); // Close edit screen
-      Get.snackbar(
-        'Success',
-        'Profile updated successfully',
-        backgroundColor: Colors.green,
-        colorText: Colors.white,
-      );
+      _closeScreen(); // Close edit screen
+      _success('Profile updated successfully');
       await _authService
           .refreshUser(); // Refresh local user data for Home screen
-      fetchProfile(); // Refresh profile
+      fetchProfile(silent: true); // Refresh profile
     } catch (e) {
-      Get.snackbar(
-        'Error',
-        'Failed to update profile: $e',
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
+      _failure('Failed to update profile', e);
     } finally {
       isLoading.value = false;
     }
@@ -142,20 +182,10 @@ class ProfileController extends GetxController {
     isLoading.value = true;
     try {
       await _familyService.deleteFamilyMember(memberId);
-      Get.snackbar(
-        'Success',
-        'Family member removed',
-        backgroundColor: Colors.green,
-        colorText: Colors.white,
-      );
-      fetchProfile();
+      _success('Family member removed');
+      fetchProfile(silent: true);
     } catch (e) {
-      Get.snackbar(
-        'Error',
-        'Failed to remove member: $e',
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
+      _failure('Failed to remove member', e);
     } finally {
       isLoading.value = false;
     }
@@ -181,25 +211,15 @@ class ProfileController extends GetxController {
         if (spouseId != null) 'spouseId': spouseId,
         if (imageUrl != null) 'profileImage': imageUrl,
       });
-      Get.back(); // Close edit screen
-      Get.snackbar(
-        'Success',
-        'Member updated successfully',
-        backgroundColor: Colors.green,
-        colorText: Colors.white,
-      );
+      _closeScreen(); // Close edit screen
+      _success('Member updated successfully');
       // specific member update might check if it's the logged-in user
       if (memberId == user.value?.member?.id) {
         await _authService.refreshUser();
       }
-      fetchProfile();
+      fetchProfile(silent: true);
     } catch (e) {
-      Get.snackbar(
-        'Error',
-        'Failed to update member: $e',
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
+      _failure('Failed to update member', e);
     } finally {
       isLoading.value = false;
     }
@@ -219,21 +239,11 @@ class ProfileController extends GetxController {
         if (phone != null) 'phone': phone,
         if (address != null) 'address': address,
       });
-      Get.back(); // Close edit screen
-      Get.snackbar(
-        'Success',
-        'Family details updated',
-        backgroundColor: Colors.green,
-        colorText: Colors.white,
-      );
-      fetchProfile();
+      _closeScreen(); // Close edit screen
+      _success('Family details updated');
+      fetchProfile(silent: true);
     } catch (e) {
-      Get.snackbar(
-        'Error',
-        'Failed to update family: $e',
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
+      _failure('Failed to update family', e);
     } finally {
       isLoading.value = false;
     }

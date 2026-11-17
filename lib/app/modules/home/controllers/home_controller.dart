@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import '../../../data/models/announcement.dart';
@@ -12,7 +13,9 @@ class HomeController extends GetxController {
   final ContentService _contentService = Get.find<ContentService>();
   final AuthService _authService = Get.find<AuthService>();
 
-  String get userName => _authService.userName;
+  /// Logged-in member's name; updates whenever the stored user changes.
+  final userName = ''.obs;
+  VoidCallback? _removeUserListener;
 
   final RxnString userImage = RxnString(); // Reactive user image
 
@@ -32,16 +35,29 @@ class HomeController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    // Initialize user image
-    userImage.value = _authService.userImage;
+    // Initialize user name & image
+    _syncUser();
 
-    // Listen for storage changes to update image dynamically
+    // Listen for storage changes to update name & image dynamically
     final storage = GetStorage();
-    storage.listenKey('user', (val) {
-      userImage.value = _authService.userImage;
-    });
+    _removeUserListener = storage.listenKey('user', (val) => _syncUser());
+
+    // Refresh the profile so the member name is current (also covers users
+    // who logged in before the profile was fetched at login).
+    _authService.refreshUser();
 
     fetchContent();
+  }
+
+  void _syncUser() {
+    userName.value = _authService.userName;
+    userImage.value = _authService.userImage;
+  }
+
+  @override
+  void onClose() {
+    _removeUserListener?.call();
+    super.onClose();
   }
 
   Future<void> fetchContent() async {
